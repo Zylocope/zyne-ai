@@ -16,13 +16,17 @@ Sounds carry a role, because background music and a guided breathing session wan
 ```
 loop  <youtube link> | Lofi radio
 loop  <youtube link> | Justin Sung focus music
-break <youtube link> | Wim Hof breathing | 10
+night <youtube link> | Wim Hof breathing | 10
 break <youtube link> | Box breathing     | 5
 ```
 
-`loop` is background — it resumes automatically when you press `+` and repeats until you stop. `break` is a guided session: offered during breaks, played once, never looped. The trailing number is its length in minutes, and a session is only offered when the break is long enough to hold it — so the 10-minute Wim Hof appears on 52/17 and the 90/20 deep block, but not on Pomodoro's 5-minute break. Untagged lines are treated as background.
+`loop` is background — it resumes automatically when you press `+` and repeats until you stop.
 
-Break sessions are offered as a chip, never auto-played, so a break can still just be a break. Every sound stays tappable manually at any time.
+`break` is a guided session: offered during breaks, played once, never looped. The trailing number is its length in minutes, and it's only offered when the break is long enough to hold it, so a 10-minute session never appears in Pomodoro's 5-minute break.
+
+`night` is a once-a-night ritual that ignores the timer entirely. It sits as a card on the Journal until you play it, then marks itself done and rests until tomorrow. Tick it manually if you did it away from the app.
+
+Untagged lines are treated as background. Break sessions are offered as a chip, never auto-played, so a break can still just be a break — and every sound stays tappable manually.
 
 The player is a visible 280×200 dock in the corner: [YouTube's policy](https://developers.google.com/youtube/terms/required-minimum-functionality) forbids hiding or overlaying it, or playing audio-only. That applies to breathing videos as much as to music.
 - **Library** *(laptop; a Books chip on the phone)* — a discovery feed of **one idea per card**, lifted from book-summary feeds and ranked by the same interest profile as your news. You never type book data. Save an idea and it becomes markdown in the vault; save the book and it joins your reading list, which then turns up during your timer breaks.

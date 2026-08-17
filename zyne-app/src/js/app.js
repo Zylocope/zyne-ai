@@ -646,11 +646,55 @@ function renderSoundChips() {
   const host = document.getElementById('soundChips')
   if (!host) return
   const list = parseSounds(soundsText)
-  host.innerHTML = list.length
-    ? list.map((s, i) =>
-        `<button class="chip${i === lastLoopIndex ? ' active' : ''}" onclick="window.playSound(${i})">${esc(s.name)}${s.role === 'break' ? `<span class="chip-rhythm">${s.minutes ? `${s.minutes}m` : 'session'}</span>` : ''}</button>`
-      ).join('')
-    : `<span class="composer-hint">No sounds yet — add YouTube links in settings.</span>`
+  const chips = list
+    .map((s, i) => ({ s, i }))
+    .filter(({ s }) => s.role !== 'night')      // nightly ritual has its own card
+    .map(({ s, i }) =>
+      `<button class="chip${i === lastLoopIndex ? ' active' : ''}" onclick="window.playSound(${i})">${esc(s.name)}${s.role === 'break' ? `<span class="chip-rhythm">${s.minutes ? `${s.minutes}m` : 'session'}</span>` : ''}</button>`
+    ).join('')
+  host.innerHTML = chips ||
+    `<span class="composer-hint">No sounds yet — tap the gear to add YouTube links.</span>`
+  renderNightCard()
+}
+
+// A once-a-night ritual: no timer, no time gate. It sits there until you
+// play it, then rests until tomorrow.
+async function renderNightCard() {
+  const host = document.getElementById('nightCard')
+  if (!host) return
+  const list = parseSounds(soundsText)
+  const nights = list.map((s, i) => ({ s, i })).filter(({ s }) => s.role === 'night')
+  if (!nights.length) { host.style.display = 'none'; return }
+  const today = toISODate(new Date())
+  const done = (await getSetting('night_done')) === today
+  host.innerHTML = `<div class="j-section-label">TONIGHT</div>` + nights.map(({ s, i }) => `
+    <div class="j-row night-row${done ? ' done' : ''}">
+      <button class="j-check" onclick="window.toggleNightDone()" aria-label="${done ? 'Mark not done' : 'Mark done'}">
+        ${done ? '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+      </button>
+      <div class="j-text">
+        <div class="j-title">${esc(s.name)}</div>
+        <div class="j-meta">${done ? 'done tonight' : s.minutes ? `${s.minutes} minutes` : 'once a night'}</div>
+      </div>
+      <button class="j-act" onclick="window.playNight(${i})" aria-label="Play">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21"/></svg>
+      </button>
+    </div>`).join('')
+  host.style.display = 'block'
+}
+
+// Playing it counts as doing it.
+async function playNight(i) {
+  playSound(i)
+  await setSetting('night_done', toISODate(new Date()))
+  renderNightCard()
+}
+
+async function toggleNightDone() {
+  const today = toISODate(new Date())
+  const done = (await getSetting('night_done')) === today
+  await setSetting('night_done', done ? '' : today)
+  renderNightCard()
 }
 
 function playSound(i) {
@@ -1129,7 +1173,7 @@ Object.assign(window, {
   // Focus
   beginCompose, startSession, stopSession, skipPhase, setMethod,
   toggleFocusSettings, saveFocusSettings,
-  playSound, stopSound, openExternal,
+  playSound, stopSound, openExternal, playNight, toggleNightDone,
   // Library
   setLibraryView, saveIdeaCard, wantBook, wantToggle, wantRemove,
   __reloadLibrary: loadLibrary,   // used by the browser-dev self-check

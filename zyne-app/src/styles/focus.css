@@ -211,3 +211,13 @@
 /* guided sessions offered during a break */
 .break-sounds { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 10px; }
 .break-sounds .chip { background: var(--key-grad); box-shadow: var(--edge-hi), var(--edge-lo); }
+
+/* nightly ritual — its own card, not a chip */
+.night-card { margin-top: 4px; }
+.night-row.done .j-title { text-decoration: line-through; color: var(--muted); }
+.night-row.done .j-check { border-color: var(--learn); }
+.sound-bar-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+}
+.sound-bar-head .j-section-label { margin: 14px 4px 7px 2px; }
+.icon-btn-sm { width: 34px; height: 34px; border-radius: 10px; }

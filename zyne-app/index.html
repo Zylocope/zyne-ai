@@ -189,26 +189,29 @@
   <div class="page" id="page-focus">
     <div class="page-header feed-head" data-tauri-drag-region>
       <div class="page-title">FOCUS</div>
-      <button class="icon-btn" onclick="toggleFocusSettings()" title="Timer &amp; sounds" aria-label="Timer and sound settings">
-        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33h.01a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51h.01a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v.01a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-      </button>
     </div>
 
-    <div id="focusSettings" class="feed-sheet" style="display:none">
-      <label class="sheet-label" for="soundsText">Focus sounds <span class="sheet-sub">— one per line: <code>&lt;youtube link&gt; | Label</code>. The player stays visible because YouTube's policy forbids hiding it.</span></label>
-      <textarea id="soundsText" spellcheck="false" style="height:110px"></textarea>
-      <button class="btn-primary" style="font-size:13px;padding:10px" onclick="saveFocusSettings()">SAVE</button>
-    </div>
+    
 
     <div class="scroll-area focus-body">
       <!-- timer + break panel move together into the Journal page on phones -->
       <div id="focusSlot">
         <div id="timerHost"></div>
         <div id="breakReview" class="break-review" style="display:none"></div>
-      </div>
-      <div class="sound-bar">
-        <div class="j-section-label">FOCUS SOUND</div>
-        <div class="chip-row" id="soundChips"></div>
+        <!-- once-a-night ritual: ignores the timer, resets each day -->
+        <div id="nightCard" class="night-card" style="display:none"></div>
+        <div class="sound-bar">
+          <div class="sound-bar-head">
+            <span class="j-section-label">FOCUS SOUND</span>
+            <button class="icon-btn icon-btn-sm" onclick="toggleFocusSettings()" title="Sounds" aria-label="Sound settings"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33h.01a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51h.01a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v.01a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
+          </div>
+          <div class="chip-row" id="soundChips"></div>
+        </div>
+        <div id="focusSettings" class="feed-sheet" style="display:none">
+      <label class="sheet-label" for="soundsText">Focus sounds <span class="sheet-sub">— one per line: <code>&lt;youtube link&gt; | Label</code>. The player stays visible because YouTube's policy forbids hiding it.</span></label>
+      <textarea id="soundsText" spellcheck="false" style="height:110px"></textarea>
+      <button class="btn-primary" style="font-size:13px;padding:10px" onclick="saveFocusSettings()">SAVE</button>
+    </div>
       </div>
     </div>
 

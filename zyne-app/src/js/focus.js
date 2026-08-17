@@ -58,10 +58,11 @@ export function youtubeId(url) {
 }
 
 /**
- * Sounds carry a role, because background music and a guided breathing
- * session want opposite treatment:
+ * Sounds carry a role, because background music, a guided break and a
+ * nightly ritual all want different treatment:
  *   loop  <url> | Label            → plays under the work, repeats
- *   break <url> | Label | minutes  → played once during a break
+ *   break <url> | Label | minutes  → played once during a break that fits
+ *   night <url> | Label | minutes  → a once-a-night ritual, ignores the timer
  * A line with no role is background, so older lists keep working.
  */
 export function parseSounds(text) {
@@ -71,7 +72,7 @@ export function parseSounds(text) {
     .filter(l => l && !l.startsWith('#'))
     .map(line => {
       const parts = line.split('|').map(s => s.trim())
-      const role = /^(loop|break)\b/i.exec(parts[0])
+      const role = /^(loop|break|night)\b/i.exec(parts[0])
       const spec = role ? parts[0].slice(role[0].length).trim() : parts[0]
       const id = youtubeId(spec)
       if (!id) return null
@@ -79,7 +80,7 @@ export function parseSounds(text) {
       return {
         role: kind,
         id,
-        name: parts[1] || (kind === 'break' ? 'Break session' : 'Focus sound'),
+        name: parts[1] || (kind === 'loop' ? 'Focus sound' : kind === 'night' ? 'Nightly ritual' : 'Break session'),
         minutes: parseInt(parts[2]) || 0,     // 0 = unknown length, fits any break
       }
     })
@@ -91,14 +92,16 @@ export function parseSounds(text) {
 export const breakSoundsFor = (sounds, breakMinutes) =>
   sounds.filter(s => s.role === 'break' && (!s.minutes || s.minutes <= breakMinutes))
 
-export const DEFAULT_SOUNDS = `# One per line:   loop|break  <youtube link>  | Label  | minutes
+export const DEFAULT_SOUNDS = `# One per line:   loop|break|night  <youtube link>  | Label  | minutes
 #
 #   loop  — background. Starts with your session and repeats.
-#   break — a guided session. Offered when the break is long enough,
-#           and plays once. The last number is its length in minutes.
+#   break — a guided session, offered when the break is long enough.
+#           Plays once. The last number is its length in minutes.
+#   night — a once-a-night ritual. Ignores the timer entirely; sits on
+#           your Journal until you play it, then rests until tomorrow.
 #
 # loop  <youtube link> | Lofi radio
 # loop  <youtube link> | Justin Sung focus music
-# break <youtube link> | Wim Hof breathing | 10
+# night <youtube link> | Wim Hof breathing | 10
 # break <youtube link> | Box breathing     | 5
 `
