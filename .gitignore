@@ -24,6 +24,8 @@ keystore.properties
 # ── editor / tooling / OS ─────────────────────────────────────
 .idea/
 .vscode/
-.claude/
+# ignore .claude contents but keep shared slash commands
+.claude/*
+!.claude/commands/
 .DS_Store
 Thumbs.db
