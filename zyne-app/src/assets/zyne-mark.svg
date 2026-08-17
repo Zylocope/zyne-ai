@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none" role="img" aria-label="Zyne mark">
+  <title>Zyne</title>
+  <defs>
+    <linearGradient id="zg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#00c9a7"/>
+      <stop offset="1" stop-color="#00e2b8"/>
+    </linearGradient>
+  </defs>
+  <!-- Z top bar -->
+  <path d="M64 72 L192 72" stroke="url(#zg)" stroke-width="22" stroke-linecap="round"/>
+  <!-- Z diagonal -->
+  <path d="M192 72 L64 184" stroke="url(#zg)" stroke-width="22" stroke-linecap="round"/>
+  <!-- Z bottom bar -->
+  <path d="M64 184 L192 184" stroke="url(#zg)" stroke-width="22" stroke-linecap="round"/>
+  <!-- thought node at diagonal midpoint -->
+  <circle cx="128" cy="128" r="9" fill="#a78bfa"/>
+</svg>

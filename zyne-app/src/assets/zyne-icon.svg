@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Zyne app icon">
+  <title>Zyne</title>
+  <!--
+    Vector rebuild of Logo/Zyne_AI_Logo.jpeg.
+    Geometry and colour sampled from the source: pointy-top regular hexagon,
+    stroke/radius ratio 0.102, cyan (top-left) → pale mint (bottom-right) ramp,
+    interior #202125 on a near-black ground.
+    Glow is layered strokes rather than an SVG filter, so every rasteriser
+    (resvg via `tauri icon`, Android webview, browsers) renders it identically.
+  -->
+  <defs>
+    <linearGradient id="zRamp" x1="0.12" y1="0" x2="0.9" y2="1">
+      <stop offset="0"    stop-color="#35E8EC"/>
+      <stop offset="0.45" stop-color="#5FE5D8"/>
+      <stop offset="1"    stop-color="#A6E3C4"/>
+    </linearGradient>
+    <radialGradient id="zHalo" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0"    stop-color="#2FD9D0" stop-opacity="0.20"/>
+      <stop offset="0.55" stop-color="#2FD9D0" stop-opacity="0.07"/>
+      <stop offset="1"    stop-color="#2FD9D0" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="zGround" cx="0.5" cy="0.46" r="0.72">
+      <stop offset="0" stop-color="#1F1F1E"/>
+      <stop offset="1" stop-color="#121214"/>
+    </radialGradient>
+  </defs>
+
+  <!-- ground + ambient glow -->
+  <rect width="512" height="512" fill="url(#zGround)"/>
+  <circle cx="256" cy="256" r="248" fill="url(#zHalo)"/>
+
+  <!-- hexagon: interior, then bloom layers, then the crisp edge -->
+  <path d="M278.5 89 Q256 76 233.5 89L122.6 153 Q100.1 166 100.1 192L100.1 320 Q100.1 346 122.6 359L233.5 423 Q256 436 278.5 423L389.4 359 Q411.9 346 411.9 320L411.9 192 Q411.9 166 389.4 153 Z"
+        fill="#202125"/>
+  <g fill="none" stroke="url(#zRamp)" stroke-linejoin="round">
+    <path d="M278.5 89 Q256 76 233.5 89L122.6 153 Q100.1 166 100.1 192L100.1 320 Q100.1 346 122.6 359L233.5 423 Q256 436 278.5 423L389.4 359 Q411.9 346 411.9 320L411.9 192 Q411.9 166 389.4 153 Z" stroke-width="36" opacity="0.10"/>
+    <path d="M278.5 89 Q256 76 233.5 89L122.6 153 Q100.1 166 100.1 192L100.1 320 Q100.1 346 122.6 359L233.5 423 Q256 436 278.5 423L389.4 359 Q411.9 346 411.9 320L411.9 192 Q411.9 166 389.4 153 Z" stroke-width="26" opacity="0.22"/>
+    <path d="M278.5 89 Q256 76 233.5 89L122.6 153 Q100.1 166 100.1 192L100.1 320 Q100.1 346 122.6 359L233.5 423 Q256 436 278.5 423L389.4 359 Q411.9 346 411.9 320L411.9 192 Q411.9 166 389.4 153 Z" stroke-width="18"/>
+  </g>
+
+  <!-- Z circuit trace: glow, tube wall, then interior cut to hollow it out -->
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="192,172 320,172 192,340 320,340" stroke="url(#zRamp)" stroke-width="38" opacity="0.13"/>
+    <polyline points="192,172 320,172 192,340 320,340" stroke="url(#zRamp)" stroke-width="27"/>
+    <polyline points="192,172 320,172 192,340 320,340" stroke="#202125" stroke-width="13"/>
+  </g>
+  <!-- circuit nodes at the trace ends and the diagonal midpoint -->
+  <g fill="url(#zRamp)">
+    <circle cx="192" cy="172" r="11"/>
+    <circle cx="320" cy="340" r="11"/>
+    <circle cx="256" cy="256" r="8"/>
+  </g>
+</svg>

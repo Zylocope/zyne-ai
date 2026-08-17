@@ -1,0 +1,29 @@
+# ── dependencies ──────────────────────────────────────────────
+node_modules/
+
+# ── build output ──────────────────────────────────────────────
+dist/
+target/
+
+# ── Tauri generated mobile project ────────────────────────────
+# Regenerate with `pnpm tauri android init`. Also holds the release
+# keystore, so it must never be committed.
+zyne-app/src-tauri/gen/
+
+# ── signing secrets ───────────────────────────────────────────
+# Belt and braces, in case gen/ is ever un-ignored.
+*.keystore
+*.jks
+keystore.properties
+
+# ── local data ────────────────────────────────────────────────
+*.db
+*.db-journal
+*.apk
+
+# ── editor / tooling / OS ─────────────────────────────────────
+.idea/
+.vscode/
+.claude/
+.DS_Store
+Thumbs.db

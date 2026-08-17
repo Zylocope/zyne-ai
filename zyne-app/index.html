@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>ZYNE.AI</title>
+  <link rel="stylesheet" href="/src/styles/main.css">
+  <link rel="stylesheet" href="/src/styles/feed.css">
+  <link rel="stylesheet" href="/src/styles/focus.css">
+</head>
+<body>
+<div class="app">
+
+  <!-- PIN LOCK -->
+  <div id="pinLock">
+    <svg width="76" height="76" viewBox="0 0 512 512" aria-hidden="true">
+      <defs>
+        <linearGradient id="pRamp" x1="0.12" y1="0" x2="0.9" y2="1">
+          <stop offset="0" stop-color="#35E8EC"/><stop offset="0.45" stop-color="#5FE5D8"/><stop offset="1" stop-color="#A6E3C4"/>
+        </linearGradient>
+        <radialGradient id="pHalo" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0" stop-color="#2FD9D0" stop-opacity="0.22"/><stop offset="0.55" stop-color="#2FD9D0" stop-opacity="0.08"/><stop offset="1" stop-color="#2FD9D0" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <circle cx="256" cy="256" r="250" fill="url(#pHalo)"/>
+      <path d="M278.5 89 Q256 76 233.5 89L122.6 153 Q100.1 166 100.1 192L100.1 320 Q100.1 346 122.6 359L233.5 423 Q256 436 278.5 423L389.4 359 Q411.9 346 411.9 320L411.9 192 Q411.9 166 389.4 153 Z" fill="#202125"/>
+      <g fill="none" stroke="url(#pRamp)" stroke-linejoin="round">
+        <path d="M278.5 89 Q256 76 233.5 89L122.6 153 Q100.1 166 100.1 192L100.1 320 Q100.1 346 122.6 359L233.5 423 Q256 436 278.5 423L389.4 359 Q411.9 346 411.9 320L411.9 192 Q411.9 166 389.4 153 Z" stroke-width="28" opacity="0.20"/>
+        <path d="M278.5 89 Q256 76 233.5 89L122.6 153 Q100.1 166 100.1 192L100.1 320 Q100.1 346 122.6 359L233.5 423 Q256 436 278.5 423L389.4 359 Q411.9 346 411.9 320L411.9 192 Q411.9 166 389.4 153 Z" stroke-width="18"/>
+      </g>
+      <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="192,172 320,172 192,340 320,340" stroke="url(#pRamp)" stroke-width="27"/>
+        <polyline points="192,172 320,172 192,340 320,340" stroke="#202125" stroke-width="13"/>
+      </g>
+      <g fill="url(#pRamp)">
+        <circle cx="192" cy="172" r="11"/><circle cx="320" cy="340" r="11"/><circle cx="256" cy="256" r="8"/>
+      </g>
+    </svg>
+    <div class="pin-dots" id="pinDots" aria-label="PIN entry">
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <div class="pin-msg" id="pinMsg">Enter PIN</div>
+    <div class="pin-pad">
+      <button class="pin-key" onclick="pinPress('1')">1</button>
+      <button class="pin-key" onclick="pinPress('2')">2</button>
+      <button class="pin-key" onclick="pinPress('3')">3</button>
+      <button class="pin-key" onclick="pinPress('4')">4</button>
+      <button class="pin-key" onclick="pinPress('5')">5</button>
+      <button class="pin-key" onclick="pinPress('6')">6</button>
+      <button class="pin-key" onclick="pinPress('7')">7</button>
+      <button class="pin-key" onclick="pinPress('8')">8</button>
+      <button class="pin-key" onclick="pinPress('9')">9</button>
+      <span></span>
+      <button class="pin-key" onclick="pinPress('0')">0</button>
+      <button class="pin-key pin-back" onclick="pinBack()" aria-label="Delete digit">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 4H8l-7 8 7 8h13a2 2 0 002-2V6a2 2 0 00-2-2z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- FEED PAGE -->
+  <div class="page active" id="page-feed">
+    <div class="page-header feed-head" style="display: flex; justify-content: space-between; align-items: center;" data-tauri-drag-region>
+      <div class="titlebar-title" style="display:flex;align-items:center;gap:8px">
+        <!-- header mark: simplified for 28px — solid trace, no hollow or glow -->
+        <svg width="28" height="28" viewBox="0 0 512 512" style="flex-shrink:0" aria-hidden="true">
+          <defs>
+            <linearGradient id="hRamp" x1="0.12" y1="0" x2="0.9" y2="1">
+              <stop offset="0" stop-color="#35E8EC"/><stop offset="0.45" stop-color="#5FE5D8"/><stop offset="1" stop-color="#A6E3C4"/>
+            </linearGradient>
+          </defs>
+          <path d="M278.5 89 Q256 76 233.5 89L122.6 153 Q100.1 166 100.1 192L100.1 320 Q100.1 346 122.6 359L233.5 423 Q256 436 278.5 423L389.4 359 Q411.9 346 411.9 320L411.9 192 Q411.9 166 389.4 153 Z" fill="none" stroke="url(#hRamp)" stroke-width="26" stroke-linejoin="round"/>
+          <polyline points="196,178 316,178 196,334 316,334" fill="none" stroke="url(#hRamp)" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>ZYNE<span style="color:#00c9a7;font-weight:300">.ai</span></span>
+      </div>
+      <div class="feed-head-actions">
+        <button class="icon-btn" onclick="toggleSettings()" title="Settings" aria-label="Settings">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33h.01a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51h.01a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v.01a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        </button>
+        <button class="icon-btn" id="refreshBtn" onclick="refreshFeed()" title="Refresh" aria-label="Refresh feed">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- KIND FILTER CHIPS -->
+    <div class="chip-row" id="kindChips" role="tablist" aria-label="Filter feed by type">
+      <button class="chip active" data-kind="all" onclick="setKindFilter('all')">All</button>
+      <button class="chip" data-kind="video" onclick="setKindFilter('video')">Videos</button>
+      <button class="chip" data-kind="article" onclick="setKindFilter('article')">Articles</button>
+      <button class="chip" data-kind="post" onclick="setKindFilter('post')">Community</button>
+      <button class="chip" data-kind="idea" onclick="setKindFilter('idea')">Books</button>
+    </div>
+
+    <!-- SETTINGS (API key · interest profile · sources) -->
+    <div id="settingsSheet" class="feed-sheet" style="display:none">
+      <label class="sheet-label" for="apiKeyInput">Anthropic API key <span class="sheet-sub">— optional. Without it the feed is ranked locally by keyword, free. With it, Haiku ranks and writes hooks (~1-3¢ per refresh). Stored only on this device.</span></label>
+      <input class="input-field" id="apiKeyInput" type="password" placeholder="sk-ant-..." autocomplete="off">
+
+      <label class="sheet-label" for="profileText">Interest profile <span class="sheet-sub">— drives both ranking modes. Keep the <code>SCORE 0-2</code> line: everything above it counts as signal, below as noise.</span></label>
+      <textarea id="profileText" spellcheck="false" style="height:170px"></textarea>
+
+      <label class="sheet-label" for="sourcesText">Sources <span class="sheet-sub">— one per line: <code>youtube &lt;channelId&gt;</code> · <code>reddit &lt;sub&gt;</code> · <code>rss &lt;url&gt;</code> · <code>github &lt;owner/repo&gt;</code> · <code>gnews &lt;topic&gt;</code> · <code>hn front</code>. Add <code>| Name</code> for a label, <code>#</code> to comment out.</span></label>
+      <textarea id="sourcesText" spellcheck="false"></textarea>
+
+      <button class="btn-primary" style="font-size:13px;padding:10px" onclick="saveSettings()">SAVE &amp; REFRESH</button>
+    </div>
+
+    <div class="scroll-area" id="feedList">
+      <div class="feed-status" id="feedStatus">Loading feed…</div>
+    </div>
+  </div>
+
+  <!-- JOURNAL PAGE (bullet journal: events + tasks + notes per day) -->
+  <div class="page" id="page-journal">
+    <div class="page-header feed-head" style="display: flex; justify-content: space-between; align-items: center;" data-tauri-drag-region>
+      <div class="page-title">JOURNAL <span id="selectedDateLabel" class="journal-date-label"></span></div>
+      <div id="clockDisplay" class="clock-pill"></div>
+    </div>
+    <div class="scroll-area" id="journalScroll">
+
+      <div class="card collapsed" id="miniMonthCard">
+        <div class="section-head" onclick="this.parentElement.classList.toggle('collapsed')">
+          <div class="section-accent" style="background:var(--pers)"></div>
+          <div class="section-name">Calendar</div>
+          <span class="section-chevron">▾</span>
+        </div>
+        <div class="card-body" style="padding-top:6px;padding-bottom:6px">
+          <div id="miniMonth"></div>
+        </div>
+      </div>
+
+      <!-- on phones the Focus timer is moved in here, replacing Activity Tap -->
+      <div id="timerHostMobile"></div>
+
+      <!-- DAY LOG -->
+      <div id="dayLog"></div>
+
+    </div>
+
+    <!-- COMPOSER -->
+    <div class="composer">
+      <div class="chip-row composer-chips">
+        <button class="chip active" data-etype="task" onclick="setEntryType('task')">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="5"/></svg> Task
+        </button>
+        <button class="chip" data-etype="note" onclick="setEntryType('note')">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/></svg> Note
+        </button>
+        <button class="chip" data-etype="event" onclick="setEntryType('event')">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><circle cx="12" cy="12" r="8"/></svg> Event
+        </button>
+        <span class="composer-hint" id="composerHint">saved to journal md</span>
+      </div>
+      <div class="composer-event-fields" id="eventFields" style="display:none">
+        <input class="input-field" id="schedTime" type="time" value="09:00" aria-label="Event time">
+        <input class="input-field" id="schedDur" type="number" value="30" min="5" aria-label="Duration minutes" placeholder="Min">
+        <select class="input-field" id="schedRecur" aria-label="Recurrence">
+          <option value="once">One-time</option>
+          <option value="daily">Every day</option>
+          <option value="weekdays">Weekdays</option>
+          <option value="weekly:1">Mondays</option>
+          <option value="weekly:2">Tuesdays</option>
+          <option value="weekly:3">Wednesdays</option>
+          <option value="weekly:4">Thursdays</option>
+          <option value="weekly:5">Fridays</option>
+          <option value="weekly:1,3,5">Mon·Wed·Fri</option>
+          <option value="weekly:0,6">Weekends</option>
+        </select>
+        <select class="input-field" id="schedNotify" aria-label="Reminder">
+          <option value="0">No alert</option>
+          <option value="5">5m before</option>
+          <option value="15">15m before</option>
+          <option value="30">30m before</option>
+          <option value="60">1h before</option>
+        </select>
+      </div>
+      <div class="task-input-row" style="border-top:none;padding-top:0">
+        <input class="input-field" id="entryInput" placeholder="Add a task…" style="flex:1">
+        <button class="task-add-btn" onclick="submitEntry()" aria-label="Add entry">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOCUS PAGE (desktop only) -->
+  <div class="page" id="page-focus">
+    <div class="page-header feed-head" data-tauri-drag-region>
+      <div class="page-title">FOCUS</div>
+      <button class="icon-btn" onclick="toggleFocusSettings()" title="Timer &amp; sounds" aria-label="Timer and sound settings">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33h.01a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51h.01a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v.01a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      </button>
+    </div>
+
+    <div id="focusSettings" class="feed-sheet" style="display:none">
+      <label class="sheet-label" for="soundsText">Focus sounds <span class="sheet-sub">— one per line: <code>&lt;youtube link&gt; | Label</code>. The player stays visible because YouTube's policy forbids hiding it.</span></label>
+      <textarea id="soundsText" spellcheck="false" style="height:110px"></textarea>
+      <button class="btn-primary" style="font-size:13px;padding:10px" onclick="saveFocusSettings()">SAVE</button>
+    </div>
+
+    <div class="scroll-area focus-body">
+      <!-- timer + break panel move together into the Journal page on phones -->
+      <div id="focusSlot">
+        <div id="timerHost"></div>
+        <div id="breakReview" class="break-review" style="display:none"></div>
+      </div>
+      <div class="sound-bar">
+        <div class="j-section-label">FOCUS SOUND</div>
+        <div class="chip-row" id="soundChips"></div>
+      </div>
+    </div>
+
+    <!-- YouTube player: visible by policy, ≥200×200, docked -->
+    <div id="soundDock" class="sound-dock" style="display:none">
+      <div class="sound-dock-head">
+        <span id="soundDockName">Focus sound</span>
+        <button class="j-act" onclick="stopSound()" aria-label="Stop sound">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div id="soundPlayer"></div>
+    </div>
+  </div>
+
+  <!-- LIBRARY PAGE (desktop only) -->
+  <div class="page" id="page-library">
+    <div class="page-header feed-head" data-tauri-drag-region>
+      <div class="page-title">LIBRARY</div>
+      <button class="icon-btn" id="libRefreshBtn" onclick="refreshFeed()" title="Find new books" aria-label="Find new books">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+      </button>
+    </div>
+
+    <div class="chip-row" id="libraryChips" role="tablist" aria-label="Library view">
+      <button class="chip active" data-lib="ideas" onclick="setLibraryView('ideas')">Ideas</button>
+      <button class="chip" data-lib="list" onclick="setLibraryView('list')">Reading list</button>
+    </div>
+
+    <div class="scroll-area" id="libraryScroll">
+      <div id="libraryBody"><div class="feed-status">Loading books…</div></div>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <!-- Feed is phone-only; Focus and Library are laptop-only. app.js hides
+         the ones that don't belong on this platform. -->
+    <button class="nav-item active mobile-only" id="nav-feed" onclick="switchPage('feed')">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+      <span class="nav-label">Feed</span>
+    </button>
+    <button class="nav-item desktop-only" id="nav-focus" onclick="switchPage('focus')">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2"/><line x1="9" y1="2" x2="15" y2="2"/></svg>
+      <span class="nav-label">Focus</span>
+    </button>
+    <button class="nav-item desktop-only" id="nav-library" onclick="switchPage('library')">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20V3H6.5A2.5 2.5 0 004 5.5z"/><line x1="8" y1="7" x2="16" y2="7"/></svg>
+      <span class="nav-label">Library</span>
+    </button>
+    <button class="nav-item" id="nav-journal" onclick="switchPage('journal')">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/><line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="15" y2="11"/></svg>
+      <span class="nav-label">Journal</span>
+    </button>
+  </nav>
+
+</div>
+<script type="module" src="/src/js/app.js"></script>
+</body>
+</html>

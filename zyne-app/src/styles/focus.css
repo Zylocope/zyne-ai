@@ -1,0 +1,213 @@
+/* ═════════════════════════════════════════════════════════════
+   FOCUS + LIBRARY — laptop-only pages.
+   ═════════════════════════════════════════════════════════════ */
+
+/* ─── platform gating ──────────────────────────────────────── */
+.is-mobile .desktop-only { display: none !important; }
+.is-desktop .mobile-only { display: none !important; }
+
+/* ─── POMODORO ─────────────────────────────────────────────── */
+.focus-body { display: flex; flex-direction: column; gap: 10px; }
+
+.timer-wrap {
+  background: var(--panel-grad);
+  border: 1px solid var(--border);
+  border-radius: var(--card-radius);
+  box-shadow: var(--edge-hi), var(--raise-md);
+  padding: 30px 20px 24px;
+  text-align: center;
+  transition: border-color 0.3s;
+}
+.timer-wrap.is-break { border-color: rgba(0, 201, 167, 0.35); }
+
+.timer-phase {
+  font-family: 'Syne', sans-serif; font-weight: 700;
+  font-size: 10px; letter-spacing: 3.5px;
+  color: var(--muted);
+}
+.timer-wrap.is-break .timer-phase { color: var(--learn); }
+
+.timer-clock {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 84px; line-height: 1;
+  letter-spacing: 3px;
+  margin: 10px 0 4px;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.55), 0 1px 0 rgba(255,255,255,0.05);
+}
+
+.timer-rounds { display: flex; gap: 7px; justify-content: center; margin: 8px 0 18px; }
+.round-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--well); border: 1px solid var(--border2);
+  box-shadow: var(--inset-well);
+}
+.round-dot.on { background: var(--learn); border-color: var(--learn); }
+
+.timer-controls { display: flex; gap: 8px; justify-content: center; align-items: center; }
+.timer-main { min-width: 132px; font-size: 14px; padding: 11px 20px; }
+.timer-side { font-size: 11px; padding: 10px 14px; }
+.timer-note { font-size: 10px; color: var(--muted); margin-top: 14px; }
+
+/* method picker */
+.method-chips { padding: 0 0 6px; }
+.chip-rhythm { color: var(--muted); font-size: 10px; margin-left: 4px; }
+.chip.active .chip-rhythm { color: inherit; opacity: 0.7; }
+.method-benefit {
+  font-size: 11px; color: var(--muted); line-height: 1.6;
+  margin: 0 2px 12px; min-height: 18px;
+}
+
+/* idle state: one "+" and nothing else */
+.timer-wrap.idle { padding: 26px 20px 22px; }
+.timer-plus {
+  width: 88px; height: 88px; border-radius: 50%;
+  border: 1px solid var(--border2);
+  background: var(--key-grad);
+  box-shadow: var(--edge-hi), var(--edge-lo), var(--raise-md);
+  color: var(--learn);
+  font-size: 40px; line-height: 1; font-weight: 300;
+  cursor: pointer;
+  transition: transform 0.12s;
+}
+.timer-plus:active { transform: scale(0.94); }
+.timer-input {
+  width: 100%; max-width: 380px; text-align: center;
+  font-size: 15px; padding: 13px 14px;
+}
+.timer-label {
+  font-size: 12px; color: var(--text); opacity: 0.85;
+  margin-top: 6px; word-break: break-word;
+}
+#soundsText {
+  width: 100%; resize: vertical;
+  background: var(--well); color: var(--text);
+  border: 1px solid var(--border); border-radius: 10px;
+  box-shadow: var(--inset-well);
+  font-family: 'DM Mono', monospace; font-size: 11px;
+  padding: 10px; line-height: 1.7;
+}
+
+.break-review { animation: breathe-in 0.25s ease-out; }
+@keyframes breathe-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+.sound-bar .chip-row { padding: 4px 0 0; flex-wrap: wrap; }
+
+/* YouTube player dock — visible by policy, never hidden or overlaid */
+.sound-dock {
+  position: fixed; right: 16px; bottom: 78px;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  box-shadow: var(--raise-md);
+  overflow: hidden;
+  z-index: 800;
+}
+.sound-dock-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; padding: 6px 6px 6px 12px;
+  font-size: 10px; color: var(--muted);
+  letter-spacing: 1px; text-transform: uppercase;
+}
+.sound-dock iframe { display: block; border: 0; }
+
+/* ─── IDEA CARDS ───────────────────────────────────────────── */
+.fcard-idea { cursor: default; }
+.fcard-idea:active { transform: none; }
+.idea-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; margin-bottom: 9px;
+}
+.idea-label {
+  font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--learn); font-family: 'Syne', sans-serif; font-weight: 700;
+}
+.idea-src { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.idea-text {
+  font-size: 13px; line-height: 1.65; user-select: text;
+  overflow-wrap: break-word;
+}
+.idea-book {
+  font-family: 'Syne', sans-serif; font-weight: 700; font-size: 12px;
+  margin-top: 10px; padding-top: 9px;
+  border-top: 1px solid var(--border);
+}
+.idea-author { color: var(--muted); font-weight: 400; }
+.idea-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+
+/* ─── LIBRARY ──────────────────────────────────────────────── */
+.book-add-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 6px; }
+#bookWhy {
+  width: 100%; resize: vertical;
+  background: var(--well); color: var(--text);
+  border: 1px solid var(--border); border-radius: 10px;
+  box-shadow: var(--inset-well);
+  font-family: 'DM Mono', monospace; font-size: 11px;
+  padding: 10px; line-height: 1.6;
+}
+
+.book-row {
+  display: flex; gap: 12px;
+  background: var(--panel-grad);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--edge-hi);
+  padding: 12px;
+  margin-bottom: 8px;
+}
+.book-cover {
+  width: 52px; height: 74px; flex-shrink: 0;
+  border-radius: 5px 8px 8px 5px;
+  box-shadow: var(--raise-sm), inset 3px 0 0 rgba(0,0,0,0.35);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Syne', sans-serif; font-weight: 800; font-size: 17px;
+  color: rgba(255,255,255,0.82);
+  letter-spacing: 1px;
+}
+.book-main { flex: 1; min-width: 0; }
+.book-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; line-height: 1.3; }
+.book-author { font-size: 10px; color: var(--muted); margin-top: 2px; letter-spacing: 0.5px; }
+.book-idle { color: var(--pers); margin-left: 6px; }
+.book-why {
+  font-size: 11px; color: var(--text); opacity: 0.8;
+  line-height: 1.55; margin-top: 7px;
+  border-left: 2px solid var(--border2); padding-left: 9px;
+}
+.book-bar {
+  height: 5px; border-radius: 3px; margin-top: 9px;
+  background: var(--well); box-shadow: var(--inset-well); overflow: hidden;
+}
+.book-bar span { display: block; height: 100%; background: var(--learn); border-radius: 3px; }
+.book-foot {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; margin-top: 9px; flex-wrap: wrap;
+}
+.book-step { font-size: 10px; color: var(--learn); letter-spacing: 0.5px; }
+.book-actions { display: flex; gap: 5px; flex-wrap: wrap; }
+
+.book-hl { margin-top: 9px; }
+.book-hl summary {
+  font-size: 10px; color: var(--muted); cursor: pointer;
+  letter-spacing: 1px; text-transform: uppercase;
+}
+.book-hl-row {
+  font-size: 11px; line-height: 1.6; color: var(--text);
+  padding: 6px 0 6px 9px; margin-top: 5px;
+  border-left: 2px solid var(--border2);
+  user-select: text;
+}
+.book-hl-page { color: var(--pers); margin-right: 6px; font-size: 10px; }
+
+/* Wider laptop windows: give the shelf and timer some breathing room */
+@media (min-width: 700px) {
+  .focus-body, #libraryScroll { max-width: 720px; margin: 0 auto; width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .break-review { animation: none; }
+  .timer-wrap { transition: none; }
+}
+
+/* guided sessions offered during a break */
+.break-sounds { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 10px; }
+.break-sounds .chip { background: var(--key-grad); box-shadow: var(--edge-hi), var(--edge-lo); }

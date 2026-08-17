@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 96" fill="none" role="img" aria-label="Zyne.AI wordmark">
+  <title>Zyne.AI</title>
+  <defs>
+    <linearGradient id="wg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#00c9a7"/>
+      <stop offset="1" stop-color="#00e2b8"/>
+    </linearGradient>
+  </defs>
+  <!-- mark -->
+  <g transform="translate(12,16)">
+    <path d="M6 10 L58 10" stroke="url(#wg)" stroke-width="9" stroke-linecap="round"/>
+    <path d="M58 10 L6 54" stroke="url(#wg)" stroke-width="9" stroke-linecap="round"/>
+    <path d="M6 54 L58 54" stroke="url(#wg)" stroke-width="9" stroke-linecap="round"/>
+    <circle cx="32" cy="32" r="4.5" fill="#a78bfa"/>
+  </g>
+  <!-- wordmark text -->
+  <text x="96" y="66" font-family="Syne, 'Segoe UI', sans-serif" font-size="56" font-weight="700" fill="#e4e4ef" letter-spacing="4">ZYNE</text>
+  <text x="296" y="66" font-family="Syne, 'Segoe UI', sans-serif" font-size="56" font-weight="300" fill="#00c9a7" letter-spacing="2">.ai</text>
+</svg>
