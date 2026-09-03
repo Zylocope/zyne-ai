@@ -31,6 +31,7 @@ zyne-app/
     books.js              turns book-summary articles into single-idea cards
     ranker.js             local keyword scoring + optional Claude Haiku pass
     focus.js              Pomodoro state machine, sound roles (pure, tested)
+    tarot.js              78-card deck + lines to sit with (pure, tested)
     library.js            reading list + saved ideas as markdown (pure parts tested)
     journal.js            bullet-journal markdown engine
     db.js                 SQLite schema + CRUD, with in-memory fallback for browser dev
@@ -100,6 +101,14 @@ compare commit counts, merge counts and tree SHAs before pushing.
 **Network reality:** `openlibrary.org` resolves but its TCP connections are
 blocked in at least one development environment, and Google Books returns 429
 without a key. Book metadata lookup is therefore not relied on anywhere.
+
+**The tarot deck is ours, not a published one.** The 78-card structure and
+the traditional names are public domain, and Daughter/Son/Mother/Father is a
+four-word naming convention — but every image line and keyword set in
+`tarot.js` was written for this app. Don't paste in text or art from a
+published deck or its guidebook. One draw a day, stored as
+`tarot_drawn = <iso>|<index>`; it writes the card into that day's journal and
+goes face-down again at midnight (hooked to the existing clock tick).
 
 ## Sound roles
 

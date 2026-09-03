@@ -4,6 +4,7 @@ import assert from 'node:assert/strict'
 import { nextPhase, youtubeId, parseSounds, fmtClock, METHODS, methodByKey, breakSoundsFor } from './focus.js'
 import { parseList, serializeList, buildNudges, daysSince, slug } from './library.js'
 import { extractIdeas, bookFromTitle } from './books.js'
+import { CARDS, READINGS, parseDeck, parseLines } from './tarot.js'
 
 // ── pomodoro: the long break lands only after the 4th focus round
 const pom = methodByKey('pomodoro')
@@ -124,3 +125,18 @@ assert.equal(breakSoundsFor(sounds, 5).every(s => s.role === 'break'), true, 'ba
 assert.equal(breakSoundsFor(parseSounds('break https://youtu.be/eeeeeeeeeee | Unknown length'), 5).length, 1)
 
 console.log('ok — sound roles and break fitting')
+
+// ── tarot: a full deck, every card usable, no duplicates
+assert.equal(CARDS.length, 78, 'a tarot deck is 78 cards')
+assert.equal(new Set(CARDS.map(c => c.name)).size, 78, 'no card may appear twice')
+assert.ok(CARDS.every(c => c.name && c.image && c.keys), 'every card needs a name, an image and keywords')
+// suits are derived from the name, so a court card must not read as major
+const bySuit = s => CARDS.filter(c => c.suit === s).length
+assert.deepEqual([bySuit('major'), bySuit('wands'), bySuit('cups'), bySuit('swords'), bySuit('pentacles')], [22, 14, 14, 14, 14])
+assert.equal(CARDS.find(c => c.name === 'Father of Swords').suit, 'swords')
+assert.equal(parseDeck('The Fool | a pup at the cliff | trust').length, 1, 'comments and blanks only')
+// lines split on the last dash, so a dash inside the quote survives
+assert.deepEqual(parseLines('Know thyself. — Delphi')[0], { text: 'Know thyself.', who: 'Delphi' })
+assert.ok(READINGS.length >= 20 && READINGS.every(l => l.text), 'lines must not be empty')
+
+console.log('ok — tarot deck and lines')

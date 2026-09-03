@@ -26,6 +26,7 @@ import {
   phaseMinutes, fmtClock, parseSounds, breakSoundsFor,
 } from './focus.js'
 import { listWant, addWant, toggleWant, removeWant, saveIdea, buildNudges } from './library.js'
+import { CARDS, drawIndex, randomLine } from './tarot.js'
 
 // ─── STATE ───────────────────────────────────────────────────
 let feedItems = []                             // current unseen batch
@@ -173,11 +174,16 @@ async function init() {
   startReminderLoop()
 }
 
+let clockDay = ''
 function updateClock() {
   const now = new Date()
   const s = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`
   const el = document.getElementById('clockDisplay')
   if (el) el.textContent = s
+  // left open past midnight: yesterday's card must go face-down again
+  const iso = toISODate(now)
+  if (clockDay && clockDay !== iso) renderDailyCard()
+  clockDay = iso
 }
 
 // ═════════════════════════════════════════════════════════════
@@ -469,6 +475,7 @@ async function loadFocusSettings() {
   }
   timerHost = document.getElementById('timerHost')
   renderSoundChips()
+  renderDailyCard()
   renderTimer()
 }
 
@@ -656,6 +663,54 @@ function renderSoundChips() {
     `<span class="composer-hint">No sounds yet — tap the gear to add YouTube links.</span>`
   renderNightCard()
 }
+
+// ─── daily card ──────────────────────────────────────────────
+// One card a day. It is drawn, not displayed — the draw is the point —
+// and once drawn it stays until tomorrow. A line to sit with rides
+// underneath; tap it for a different one.
+let todayLine = randomLine()
+
+async function renderDailyCard() {
+  const host = document.getElementById('dailyCard')
+  if (!host) return
+  const today = toISODate(new Date())
+  const [day, idx] = ((await getSetting('tarot_drawn')) || '').split('|')
+  const card = day === today ? CARDS[Number(idx)] : null
+  host.innerHTML = `<div class="j-section-label">TODAY</div>` + (card ? `
+    <div class="j-row daily-row">
+      <div class="daily-suit ${card.suit}"></div>
+      <div class="j-text">
+        <div class="j-title">${esc(card.name)}</div>
+        <div class="j-meta">${esc(card.image)}</div>
+        <div class="daily-keys">${esc(card.keys)}</div>
+      </div>
+    </div>` : `
+    <button class="j-row daily-row daily-draw" onclick="window.drawDailyCard()">
+      <div class="daily-suit back"></div>
+      <div class="j-text">
+        <div class="j-title">Draw today's card</div>
+        <div class="j-meta">one card, once a day</div>
+      </div>
+    </button>`) + `
+    <button class="daily-line" onclick="window.shuffleLine()" aria-label="Another line">
+      ${esc(todayLine.text)}${todayLine.who ? ` <span class="daily-who">${esc(todayLine.who)}</span>` : ''}
+    </button>`
+}
+
+// Drawing writes the card into today's journal, the way a finished
+// session does — so the draws are a record, not a moment that vanishes.
+async function drawDailyCard() {
+  const today = toISODate(new Date())
+  const i = drawIndex()
+  await setSetting('tarot_drawn', `${today}|${i}`)
+  await renderDailyCard()
+  try {
+    await addEntry(today, 'note', `Card: ${CARDS[i].name} — ${CARDS[i].keys}`)
+    await loadJournal()
+  } catch (e) { console.warn('log card:', e) }
+}
+
+function shuffleLine() { todayLine = randomLine(); renderDailyCard() }
 
 // A once-a-night ritual: no timer, no time gate. It sits there until you
 // play it, then rests until tomorrow.
@@ -1174,6 +1229,8 @@ Object.assign(window, {
   beginCompose, startSession, stopSession, skipPhase, setMethod,
   toggleFocusSettings, saveFocusSettings,
   playSound, stopSound, openExternal, playNight, toggleNightDone,
+  // Daily card
+  drawDailyCard, shuffleLine,
   // Library
   setLibraryView, saveIdeaCard, wantBook, wantToggle, wantRemove,
   __reloadLibrary: loadLibrary,   // used by the browser-dev self-check

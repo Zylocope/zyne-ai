@@ -221,3 +221,33 @@
 }
 .sound-bar-head .j-section-label { margin: 14px 4px 7px 2px; }
 .icon-btn-sm { width: 34px; height: 34px; border-radius: 10px; }
+
+/* ─── daily card ───────────────────────────────────────────── */
+.daily-card { margin-bottom: 10px; }
+.daily-row { align-items: flex-start; width: 100%; text-align: left; }
+.daily-draw { cursor: pointer; font: inherit; color: inherit; }
+.daily-draw:active { transform: translateY(1px); }
+.daily-keys { font-size: 10px; color: var(--muted); margin-top: 5px; letter-spacing: .04em; text-transform: uppercase; }
+/* element mark: fire ▲ · water ▽ · air ◇ · earth ■ · major ✦ */
+.daily-suit {
+  flex: 0 0 34px; height: 34px; margin-top: 1px;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border2); border-radius: 9px;
+  background: var(--well); box-shadow: var(--inset-well);
+  font-size: 13px; color: var(--muted);
+}
+.daily-suit.major::before     { content: "✦"; color: var(--hand); }
+.daily-suit.wands::before     { content: "▲"; color: var(--proj); }
+.daily-suit.cups::before      { content: "▽"; color: var(--learn); }
+.daily-suit.swords::before    { content: "◇"; color: var(--skeptic); }
+.daily-suit.pentacles::before { content: "■"; color: var(--pers); }
+.daily-suit.back::before      { content: "✧"; }
+/* a line to sit with — quiet, tap for another */
+.daily-line {
+  display: block; width: 100%; text-align: left; cursor: pointer;
+  background: none; border: none; padding: 2px 4px 0;
+  font-family: "Instrument Serif", Georgia, serif; font-style: italic;
+  font-size: 13px; line-height: 1.5; color: var(--muted);
+}
+.daily-line:active { color: var(--text); }
+.daily-who { font-style: normal; font-size: 10px; opacity: .7; white-space: nowrap; }
