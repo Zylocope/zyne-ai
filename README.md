@@ -48,7 +48,7 @@ Android signing is not in this repo — see [`zyne-app/README.md`](zyne-app/READ
 
 ## Notes if you're reusing this
 
-The PIN lock is a convenience, not encryption — data on disk is unencrypted, and the PIN is chosen on first run and hashed into local storage, never committed. A six-digit hash is a 1,000,000-entry search, so committing one publishes the PIN.
+The app opens directly, without an app-wide PIN. Use your device lock for access control; local vault files are not encrypted by Zyne.
 
 Focus sounds use YouTube's official IFrame embed at 280×200. [Their policy](https://developers.google.com/youtube/terms/required-minimum-functionality) forbids hiding the player or playing audio-only, which is why there's no invisible background mode.
 

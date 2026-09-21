@@ -61,89 +61,6 @@ let libraryView = 'ideas'
 let lastLoopIndex = -1
 
 // ═════════════════════════════════════════════════════════════
-//  PIN LOCK
-//  A convenience lock, not a security boundary — the data on disk
-//  is not encrypted. The PIN is chosen on first run and its hash is
-//  stored locally, never in this source: a 6-digit SHA-256 is a
-//  1,000,000-entry search, so a committed hash is a published PIN.
-// ═════════════════════════════════════════════════════════════
-let pinBuffer = ''
-let pinHash = null
-let pinStage = 'enter'   // 'set' → 'confirm' on first run, else 'enter'
-let pinFirst = ''
-
-async function sha256hex(s) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s))
-  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('')
-}
-
-function pinMsg(text) {
-  const el = document.getElementById('pinMsg')
-  if (el) el.textContent = text
-}
-
-function renderPinDots() {
-  document.querySelectorAll('#pinDots span').forEach((d, i) => {
-    d.classList.toggle('filled', i < pinBuffer.length)
-  })
-}
-
-async function loadPin() {
-  try { pinHash = await getSetting('pin_hash') } catch { pinHash = null }
-  pinStage = pinHash ? 'enter' : 'set'
-  pinMsg(pinHash ? 'Enter PIN' : 'Choose a 6-digit PIN')
-}
-
-function pinUnlock() {
-  const lock = document.getElementById('pinLock')
-  if (!lock) return
-  lock.classList.add('unlocked')
-  setTimeout(() => lock.remove(), 350)
-}
-
-function pinReject(message) {
-  const dots = document.getElementById('pinDots')
-  dots?.classList.add('shake')
-  pinMsg(message)
-  setTimeout(() => dots?.classList.remove('shake'), 450)
-}
-
-async function pinPress(digit) {
-  if (pinBuffer.length >= 6) return
-  pinBuffer += digit
-  renderPinDots()
-  if (pinBuffer.length < 6) return
-
-  const entered = pinBuffer
-  pinBuffer = ''
-
-  if (pinStage === 'set') {
-    pinFirst = entered
-    pinStage = 'confirm'
-    pinMsg('Enter it again to confirm')
-  } else if (pinStage === 'confirm') {
-    if (entered === pinFirst) {
-      pinHash = await sha256hex(entered)
-      await setSetting('pin_hash', pinHash)
-      pinUnlock()
-    } else {
-      pinStage = 'set'
-      pinReject('Did not match — choose again')
-    }
-  } else if ((await sha256hex(entered)) === pinHash) {
-    pinUnlock()
-  } else {
-    pinReject('Wrong PIN')
-  }
-  renderPinDots()
-}
-
-function pinBack() {
-  pinBuffer = pinBuffer.slice(0, -1)
-  renderPinDots()
-}
-
-// ═════════════════════════════════════════════════════════════
 //  BOOT
 // ═════════════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', init)
@@ -156,7 +73,6 @@ async function init() {
   bindInputs()
 
   try { await getDb() } catch (e) { console.warn('DB init skipped:', e) }
-  await loadPin()          // first run asks you to choose one
 
   // The timer lives on both platforms; only its host differs.
   await loadFocusSettings()
@@ -510,7 +426,8 @@ function renderTimer() {
     timerHost.innerHTML = methodChipsHTML() +
       `<div class="timer-wrap idle">
         <button class="timer-plus" onclick="window.beginCompose()" aria-label="Start a session">+</button>
-        <div class="timer-note">Name what you're doing, press Enter, and it runs.</div>
+        <div class="timer-idle-title">What would you like to focus on?</div>
+        <div class="timer-note">Choose one thing. Tap + to begin.</div>
       </div>`
     return
   }
@@ -1198,12 +1115,6 @@ function bindInputs() {
   if (t) t.addEventListener('keydown', e => {
     if (e.key === 'Enter') { e.preventDefault(); submitEntry() }
   })
-  // Physical keyboard for the PIN screen (desktop convenience)
-  document.addEventListener('keydown', e => {
-    if (!document.getElementById('pinLock')) return
-    if (/^[0-9]$/.test(e.key)) pinPress(e.key)
-    if (e.key === 'Backspace') pinBack()
-  })
 }
 
 // ─── SMALL UTILS ─────────────────────────────────────────────
@@ -1220,8 +1131,6 @@ function esc(s) {
 // ═════════════════════════════════════════════════════════════
 Object.assign(window, {
   switchPage,
-  // PIN
-  pinPress, pinBack,
   // Feed
   refreshFeed, openFeedItem, clipFeedItem, clearFeedBatch,
   setKindFilter, toggleSettings, saveSettings,

@@ -15,6 +15,7 @@ zyne-app/src-tauri/gen/
 *.keystore
 *.jks
 keystore.properties
+apikey.txt
 
 # ── local data ────────────────────────────────────────────────
 *.db

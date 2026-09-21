@@ -1,67 +1,7 @@
 /* ═════════════════════════════════════════════════════════════
-   FEED + JOURNAL + PIN — reusing main.css tokens
+   FEED + JOURNAL — reusing main.css tokens
    (skeuo panel gradients, radii, accent colors).
    ═════════════════════════════════════════════════════════════ */
-
-/* ─── PIN LOCK ─────────────────────────────────────────────── */
-#pinLock {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 18px;
-  background:
-    radial-gradient(1200px 700px at 50% -10%, #17171f 0%, var(--bg) 55%),
-    var(--bg);
-  transition: opacity 0.3s ease, transform 0.3s ease;
-}
-#pinLock.unlocked { opacity: 0; transform: scale(1.04); pointer-events: none; }
-
-.pin-dots { display: flex; gap: 14px; margin-top: 6px; }
-.pin-dots span {
-  width: 13px; height: 13px; border-radius: 50%;
-  border: 1.5px solid var(--border2);
-  background: var(--well);
-  transition: background 0.15s, border-color 0.15s;
-}
-.pin-dots span.filled { background: var(--learn); border-color: var(--learn); }
-.pin-dots.shake { animation: pin-shake 0.4s; }
-@keyframes pin-shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-8px); }
-  50% { transform: translateX(8px); }
-  75% { transform: translateX(-5px); }
-}
-
-.pin-msg {
-  font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
-  color: var(--muted); min-height: 14px;
-}
-
-.pin-pad {
-  display: grid;
-  grid-template-columns: repeat(3, 72px);
-  gap: 12px;
-  margin-top: 8px;
-}
-.pin-key {
-  height: 60px;
-  border-radius: 16px;
-  border: 1px solid var(--border);
-  background: var(--key-grad);
-  box-shadow: var(--edge-hi), var(--edge-lo), var(--raise-sm);
-  color: var(--text);
-  font-family: 'DM Mono', monospace;
-  font-size: 20px;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: transform 0.1s;
-}
-.pin-key:active { transform: scale(0.94); }
-.pin-back { color: var(--muted); }
 
 /* ─── HEADERS + CHIPS ──────────────────────────────────────── */
 .feed-head {
@@ -434,8 +374,7 @@
 #toast.show { opacity: 1; transform: translate(-50%, 0); }
 
 @media (prefers-reduced-motion: reduce) {
-  .fcard, .pin-key, .icon-btn, .task-add-btn, .chip, .j-act { transition: none; }
+  .fcard, .icon-btn, .task-add-btn, .chip, .j-act { transition: none; }
   .icon-btn.spinning svg { animation: none; }
-  .pin-dots.shake { animation: none; }
   .fcard.skeleton::after { animation: none; }
 }

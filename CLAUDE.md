@@ -37,7 +37,9 @@ zyne-app/
     db.js                 SQLite schema + CRUD, with in-memory fallback for browser dev
     schedule.js           date/recurrence helpers
     focus-library.test.js runnable self-check — `node src/js/focus-library.test.js`
-  src/styles/             main.css (theme) · feed.css · focus.css
+  src/styles/             main.css (theme) · feed.css · focus.css · daylight.css
+                          (daylight.css is load-bearing, not optional — it defines
+                           the focus welcome block and timer idle copy)
   src-tauri/              Rust shell; gen/ is generated and git-ignored
 ```
 
@@ -58,9 +60,10 @@ zyne-app/
 
 ## Gotchas that already cost time
 
-**Never commit a PIN hash.** A 6-digit SHA-256 is a 1,000,000-entry search —
-recovering one takes ~250ms. The PIN is chosen on first run and stored in
-settings (`pin_hash`). Same reasoning for any short secret.
+**Never commit a short secret's hash.** The app-wide PIN was removed in
+v0.1.1 — the app now opens directly and device lock is the access control —
+but the lesson stands: a 6-digit SHA-256 is a 1,000,000-entry search,
+recovered in ~250ms, so committing such a hash publishes the secret.
 
 **`src/styles/feed.css` was once found at 0 bytes**, silently removing every
 card/PIN/journal style. If the UI looks unstyled, check file sizes before
