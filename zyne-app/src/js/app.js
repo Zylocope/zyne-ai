@@ -1119,7 +1119,6 @@ function bindInputs() {
 
 // ─── SMALL UTILS ─────────────────────────────────────────────
 function val(id)         { return document.getElementById(id)?.value || '' }
-function setVal(id, v)   { const el = document.getElementById(id); if (el) el.value = v }
 function esc(s) {
   return String(s).replace(/[&<>"']/g, c => ({
     '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'

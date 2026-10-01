@@ -4,18 +4,8 @@
 // ─────────────────────────────────────────────────────────────
 
 // Format helpers
-export const pad = (n) => String(n).padStart(2, '0')
+const pad = (n) => String(n).padStart(2, '0')
 export const toISODate = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
-export const parseISODate = (s) => {
-  if (!s) return null
-  const [y, m, d] = s.split('-').map(Number)
-  return new Date(y, (m || 1) - 1, d || 1)
-}
-
-// Compare date-only (YYYY-MM-DD), ignoring time
-export function sameDay(aISO, bISO) {
-  return aISO && bISO && aISO.slice(0, 10) === bISO.slice(0, 10)
-}
 
 // Convert JS Date.getDay() (Sun=0) → our scheme matches (Sun=0..Sat=6)
 export function weekday(date) { return date.getDay() }
@@ -28,7 +18,7 @@ export function weekday(date) { return date.getDay() }
 //    'weekdays'       → Mon-Fri from item.date onwards
 //    'weekly:1,3,5'   → on listed weekday numbers (Sun=0, Sat=6)
 // ─────────────────────────────────────────────────────────────
-export function occursOn(item, date) {
+function occursOn(item, date) {
   const dateISO = toISODate(date)
   const rule = (item.recurrence_rule || 'once').trim()
   const startISO = (item.date || item.created_at || '').slice(0, 10)
@@ -98,11 +88,6 @@ export function timeFromMinutes(mins) {
   const h = Math.floor(total / 60)
   const m = total % 60
   return `${pad(h)}:${pad(m)}`
-}
-
-// Snap minutes to nearest `step` (e.g. 15-minute intervals)
-export function snapMinutes(mins, step = 15) {
-  return Math.round(mins / step) * step
 }
 
 // Human label for a recurrence rule
