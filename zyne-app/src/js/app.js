@@ -27,6 +27,13 @@ import {
 } from './focus.js'
 import { listWant, addWant, toggleWant, removeWant, saveIdea, buildNudges } from './library.js'
 import { CARDS, drawIndex, randomLine } from './tarot.js'
+import { invoke } from '@tauri-apps/api/core'
+import { native, initStore, snapshot, chooseFile, saveFile } from './companion-store.js'
+import {
+  setSyncStatus, beginHosting, endHosting, connectAndSync,
+  exportBackup, importBackup, resolveConflict,
+} from './companion-sync.js'
+import { chatWindow } from './companion-model.js'
 
 // ─── STATE ───────────────────────────────────────────────────
 let feedItems = []                             // current unseen batch
@@ -73,6 +80,14 @@ async function init() {
   bindInputs()
 
   try { await getDb() } catch (e) { console.warn('DB init skipped:', e) }
+  // A damaged sync index must not stop the app; sync just reports it.
+  try { await initStore() } catch (e) { console.warn('companion store:', e) }
+  setSyncStatus(msg => { setStatus('syncStatus', msg); flashToast(msg) })
+  window.addEventListener('zyne-sync-complete', async () => {
+    await loadJournal()
+    if (!IS_PHONE) await loadLibrary()
+    renderConflicts()
+  })
 
   // The timer lives on both platforms; only its host differs.
   await loadFocusSettings()
@@ -88,6 +103,7 @@ async function init() {
 
   await loadJournal()
   startReminderLoop()
+  renderAiPanel()
 }
 
 let clockDay = ''
@@ -110,6 +126,7 @@ function switchPage(page) {
   document.querySelectorAll('.bottom-nav .nav-item').forEach(n => n.classList.remove('active'))
   document.getElementById('page-' + page)?.classList.add('active')
   document.getElementById('nav-'  + page)?.classList.add('active')
+  if (page === 'companion') renderConflicts()
 }
 
 // ═════════════════════════════════════════════════════════════
@@ -1108,6 +1125,207 @@ function startReminderLoop() {
 }
 
 // ═════════════════════════════════════════════════════════════
+//  COMPANION  (Wi-Fi pairing · encrypted backup · opt-in Gemini chat)
+//  The laptop hosts a pairing and the phone joins it. When a file changed
+//  on both sides, both versions are kept until you pick one here.
+// ═════════════════════════════════════════════════════════════
+let chatHistory = []          // this session only: never stored, synced or backed up
+let chatBusy = false
+let aiState = null
+
+// Rust commands reject with plain strings, JS with Errors.
+const errText = e => e?.message || String(e)
+function setStatus(id, msg) {
+  const el = document.getElementById(id)
+  if (el) el.textContent = msg
+}
+
+async function startPairing() {
+  const btn = document.getElementById('pairStartBtn')
+  btn.disabled = true
+  try {
+    document.getElementById('pairCode').value = await beginHosting()
+    setStatus('syncStatus', 'Waiting for your phone. Keep Zyne open on both.')
+  } catch (e) { setStatus('syncStatus', errText(e)) }
+  finally { btn.disabled = false }
+}
+
+async function stopPairing() {
+  try { await endHosting() } catch (e) { console.warn('stop pairing:', e) }
+  document.getElementById('pairCode').value = ''
+  setStatus('syncStatus', 'Pairing stopped.')
+}
+
+async function copyPairCode() {
+  const input = document.getElementById('pairCode')
+  if (!input.value) return
+  try { await navigator.clipboard.writeText(input.value); flashToast('Code copied') }
+  catch { input.select(); flashToast('Select the code and copy it') }
+}
+
+// The code stays in the box: it works again until the laptop's pairing ends.
+async function joinPairing() {
+  const btn = document.getElementById('joinBtn')
+  btn.disabled = true
+  setStatus('syncStatus', 'Syncing…')
+  try { await connectAndSync(document.getElementById('joinCode').value) }   // success reports via setSyncStatus
+  catch (e) { setStatus('syncStatus', errText(e)) }
+  finally { btn.disabled = false }
+}
+
+// Show each version from where it starts to differ, or every
+// version of a journal would preview the same first line.
+function renderConflicts() {
+  const host = document.getElementById('conflictList')
+  if (!host) return
+  let conflicts = []
+  try { conflicts = Object.values(snapshot().conflicts) } catch {}
+  if (!conflicts.length) { host.innerHTML = ''; return }
+  const differsAt = (a, b) => { let i = 0; while (i < a.length && a[i] === b[i]) i++; return i }
+  host.innerHTML = `<div class="j-section-label">CHANGED ON BOTH · KEEP ONE</div>` + conflicts
+    .sort((a, b) => a.path.localeCompare(b.path))
+    .map(c => {
+      let preview = 'deleted on one device'
+      if (c.content !== null) {
+        const other = conflicts.find(o => o.path === c.path && o !== c)?.content || ''
+        const at = Math.max(0, differsAt(c.content, other) - 30)
+        preview = (at ? '…' : '') + c.content.slice(at, at + 140)
+      }
+      return `
+        <div class="j-row">
+          <div class="j-text">
+            <div class="j-title">${esc(c.path)}</div>
+            <div class="j-meta">${esc(preview)}</div>
+          </div>
+          <button class="btn-mini" onclick="window.keepVersion('${esc(c.path)}','${esc(c.hash)}')">KEEP THIS</button>
+        </div>`
+    }).join('')
+}
+
+async function keepVersion(path, hash) {
+  try { await resolveConflict(path, hash); flashToast('Kept') }
+  catch (e) { setStatus('syncStatus', errText(e)) }
+}
+
+async function exportBackupFile() {
+  const pw = document.getElementById('backupPassword')
+  try {
+    const sealed = await exportBackup(pw.value)
+    if (await saveFile(`zyne-backup-${toISODate(new Date())}.zyne`, sealed)) {
+      pw.value = ''
+      setStatus('backupStatus', 'Backup saved. Keep the password somewhere safe.')
+    }
+  } catch (e) { setStatus('backupStatus', errText(e)) }
+}
+
+async function importBackupFile() {
+  const pw = document.getElementById('backupPassword')
+  if (pw.value.length < 8) return setStatus('backupStatus', 'Type the backup’s password first.')
+  try {
+    const file = await chooseFile(['zyne'], 64 * 1024 * 1024)
+    if (!file) return
+    setStatus('backupStatus', 'Importing…')
+    await importBackup(new TextDecoder().decode(file.bytes), pw.value)
+    pw.value = ''
+    // A merge, not a rollback: edits made here after the backup win.
+    setStatus('backupStatus', 'Merged in. Anything changed here since the backup keeps this device’s version; clashes are listed under Sync.')
+  } catch (e) { setStatus('backupStatus', errText(e)) }
+}
+
+// ─── gemini chat ────────────────────────────────────────────
+// Off until you import a key and turn it on. JS reads the key file once and
+// hands it to Rust, which keeps it in app data; nothing on this side stores it.
+async function renderAiPanel() {
+  const host = document.getElementById('aiPanel')
+  if (!host) return
+  if (!native) { host.innerHTML = `<div class="feed-status">Gemini chat works in the installed app.</div>`; return }
+  try { aiState = await invoke('ai_status') }
+  catch (e) { host.innerHTML = `<div class="feed-status">${esc(errText(e))}</div>`; return }
+
+  if (!aiState.configured) {
+    host.innerHTML = `
+      <div class="sheet-label">Off <span class="sheet-sub">— optional. Import a text file holding your own Gemini API key. It stays in this device’s app data and never goes into a sync or a backup.</span></div>
+      <div class="companion-actions"><button class="btn-mini" onclick="window.importAiKey()">IMPORT KEY FILE</button></div>`
+    return
+  }
+  const controls = `
+    <div class="companion-actions">
+      <button class="btn-mini" onclick="window.setAiEnabled(${!aiState.enabled})">${aiState.enabled ? 'TURN OFF' : 'TURN ON'}</button>
+      ${aiState.enabled ? `<button class="btn-mini" onclick="window.newChat()">NEW CHAT</button>` : ''}
+      <button class="btn-mini" onclick="window.importAiKey()">REPLACE KEY</button>
+      <button class="btn-mini" onclick="window.removeAiKey()">REMOVE KEY</button>
+    </div>`
+  if (!aiState.enabled) {
+    host.innerHTML = `<div class="sheet-label">Key imported · chat is off <span class="sheet-sub">— when on, what you type here goes to Google (${esc(aiState.model)}). Nothing else in Zyne does.</span></div>` + controls
+    return
+  }
+  host.innerHTML = `
+    <div class="sheet-label">On · ${esc(aiState.model)} <span class="sheet-sub">— messages go to Google. The chat isn’t saved; it’s gone when Zyne closes.</span></div>
+    <div class="chat-log" id="chatLog" aria-live="polite"></div>
+    <div class="task-input-row" style="border-top:none;padding-top:0">
+      <input class="input-field" id="chatInput" placeholder="Ask something…" style="flex:1" autocomplete="off">
+      <button class="task-add-btn" onclick="window.sendChat()" aria-label="Send">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </button>
+    </div>` + controls
+  document.getElementById('chatInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); sendChat() }
+  })
+  renderChatLog()
+}
+
+function renderChatLog() {
+  const log = document.getElementById('chatLog')
+  if (!log) return
+  log.innerHTML = chatHistory.map(m => `<div class="chat-msg ${m.role}">${esc(m.text)}</div>`).join('') +
+    (chatBusy ? `<div class="chat-msg model pending">…</div>` : '')
+  log.style.display = log.innerHTML ? '' : 'none'
+  log.scrollTop = log.scrollHeight
+}
+
+async function sendChat() {
+  const input = document.getElementById('chatInput')
+  const text = input?.value.trim()
+  if (!text || chatBusy) return
+  chatHistory.push({ role: 'user', text })
+  input.value = ''
+  chatBusy = true
+  setStatus('aiStatus', '')
+  renderChatLog()
+  try {
+    chatHistory.push({ role: 'model', text: await invoke('ai_chat', { messages: chatWindow(chatHistory) }) })
+  } catch (e) {
+    // nothing was answered, so give the words back
+    chatHistory.pop()
+    const box = document.getElementById('chatInput')
+    if (box && !box.value) box.value = text
+    setStatus('aiStatus', errText(e))
+  } finally {
+    chatBusy = false
+    renderChatLog()
+  }
+}
+
+function newChat() { chatHistory = []; setStatus('aiStatus', ''); renderChatLog() }
+
+async function configureAi(key, enabled) {
+  try { await invoke('ai_configure', { key, enabled }); setStatus('aiStatus', '') }
+  catch (e) { setStatus('aiStatus', errText(e)) }
+  await renderAiPanel()
+}
+
+async function importAiKey() {
+  let file
+  try { file = await chooseFile(['txt'], 4096) } catch (e) { return setStatus('aiStatus', errText(e)) }
+  if (!file) return
+  // Replacing a key keeps chat as it was; a first import leaves it off.
+  await configureAi(new TextDecoder().decode(file.bytes), !!aiState?.enabled)
+}
+
+const setAiEnabled = on => configureAi(null, on)
+async function removeAiKey() { chatHistory = []; await configureAi('', false) }
+
+// ═════════════════════════════════════════════════════════════
 //  INPUT BINDINGS
 // ═════════════════════════════════════════════════════════════
 function bindInputs() {
@@ -1146,4 +1364,8 @@ Object.assign(window, {
   setEntryType, submitEntry,
   journalToggle, journalMigrate, journalSkip, journalDelete, eventDelete,
   selectCalendarDate, monthStep, jumpToToday,
+  // Companion
+  startPairing, stopPairing, copyPairCode, joinPairing, keepVersion,
+  exportBackupFile, importBackupFile,
+  sendChat, newChat, importAiKey, setAiEnabled, removeAiKey,
 })

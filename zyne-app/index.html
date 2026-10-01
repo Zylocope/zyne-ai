@@ -208,6 +208,48 @@
     </div>
   </div>
 
+  <!-- COMPANION PAGE (both platforms: the laptop hosts a pairing, the phone joins it) -->
+  <div class="page" id="page-companion">
+    <div class="page-header feed-head" data-tauri-drag-region>
+      <div class="page-title">COMPANION</div>
+    </div>
+
+    <div class="scroll-area" id="companionScroll">
+      <div class="j-section-label">SYNC</div>
+      <div class="feed-sheet desktop-only">
+        <label class="sheet-label" for="pairCode">Pair with your phone <span class="sheet-sub">— same Wi-Fi only. Start here, then paste the code into Companion on your phone. Pairing stops by itself after 30 minutes.</span></label>
+        <input class="input-field" id="pairCode" readonly placeholder="No pairing running" onclick="this.select()">
+        <div class="companion-actions">
+          <button class="btn-primary" style="font-size:13px;padding:10px" id="pairStartBtn" onclick="startPairing()">START PAIRING</button>
+          <button class="btn-mini" onclick="copyPairCode()">COPY CODE</button>
+          <button class="btn-mini" onclick="stopPairing()">STOP</button>
+        </div>
+      </div>
+      <div class="feed-sheet mobile-only">
+        <label class="sheet-label" for="joinCode">Sync with your laptop <span class="sheet-sub">— on the laptop open Companion → Start pairing, then paste its code here. Same Wi-Fi only.</span></label>
+        <input class="input-field" id="joinCode" placeholder="192.168.…#…" autocomplete="off" autocapitalize="off" spellcheck="false">
+        <button class="btn-primary" style="font-size:13px;padding:10px" id="joinBtn" onclick="joinPairing()">SYNC NOW</button>
+      </div>
+      <div class="composer-hint" id="syncStatus" role="status"></div>
+      <div id="conflictList"></div>
+
+      <div class="j-section-label">BACKUP</div>
+      <div class="feed-sheet">
+        <label class="sheet-label" for="backupPassword">Encrypted backup <span class="sheet-sub">— journal, reading list, ideas, clips and schedule in one file, sealed with this password. Without the password the file can't be opened, by you or anyone.</span></label>
+        <input class="input-field" id="backupPassword" type="password" placeholder="Password, 8+ characters" autocomplete="new-password">
+        <div class="companion-actions">
+          <button class="btn-primary" style="font-size:13px;padding:10px" onclick="exportBackupFile()">EXPORT</button>
+          <button class="btn-mini" onclick="importBackupFile()">IMPORT A BACKUP</button>
+        </div>
+        <div class="composer-hint" id="backupStatus" role="status"></div>
+      </div>
+
+      <div class="j-section-label">GEMINI CHAT</div>
+      <div id="aiPanel" class="feed-sheet"></div>
+      <div class="composer-hint" id="aiStatus" role="status"></div>
+    </div>
+  </div>
+
   <!-- BOTTOM NAV -->
   <nav class="bottom-nav">
     <!-- Feed is phone-only; Focus and Library are laptop-only. app.js hides
@@ -227,6 +269,10 @@
     <button class="nav-item" id="nav-journal" onclick="switchPage('journal')">
       <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/><line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="15" y2="11"/></svg>
       <span class="nav-label">Journal</span>
+    </button>
+    <button class="nav-item" id="nav-companion" onclick="switchPage('companion')">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="4" width="13" height="10" rx="1"/><line x1="5" y1="18" x2="12" y2="18"/><rect x="16" y="8" width="6" height="12" rx="1"/></svg>
+      <span class="nav-label">Companion</span>
     </button>
   </nav>
 

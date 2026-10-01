@@ -55,6 +55,20 @@ export function growth(records) {
   const points = [...days.values()].reduce((n,d) => n + d.focus + d.memory + d.reflection, 0)
   return { points, plant: points >= 5, books: points >= 15, stars: points >= 30, scarf: points >= 50 }
 }
+// Gemini sees the tail of a chat: at most 13 turns and 24000 bytes, the limits
+// ai_chat enforces. Bytes, not JS length — Rust counts UTF-8, and Burmese is
+// 3 bytes a character. It must open on a user turn.
+export function chatWindow(history, maxTurns = 13, maxBytes = 24000) {
+  const out = []
+  let bytes = 0
+  for (let i = history.length - 1; i >= 0 && out.length < maxTurns; i--) {
+    bytes += new TextEncoder().encode(history[i].text).length
+    if (bytes > maxBytes && out.length) break
+    out.unshift(history[i])
+  }
+  while (out.length > 1 && out[0].role !== 'user') out.shift()
+  return out
+}
 export async function digest(input) {
   const bytes = typeof input === 'string' ? new TextEncoder().encode(input) : input
   return [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))].map(b => b.toString(16).padStart(2,'0')).join('')

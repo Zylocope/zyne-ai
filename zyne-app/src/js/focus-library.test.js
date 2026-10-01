@@ -5,6 +5,7 @@ import { nextPhase, youtubeId, parseSounds, fmtClock, METHODS, methodByKey, brea
 import { parseList, serializeList, buildNudges, daysSince, slug } from './library.js'
 import { extractIdeas, bookFromTitle } from './books.js'
 import { CARDS, READINGS, parseDeck, parseLines } from './tarot.js'
+import { chatWindow } from './companion-model.js'
 
 // ── pomodoro: the long break lands only after the 4th focus round
 const pom = methodByKey('pomodoro')
@@ -140,3 +141,19 @@ assert.deepEqual(parseLines('Know thyself. — Delphi')[0], { text: 'Know thysel
 assert.ok(READINGS.length >= 20 && READINGS.every(l => l.text), 'lines must not be empty')
 
 console.log('ok — tarot deck and lines')
+
+// ── companion chat: the window ai_chat accepts
+const turn = (role, text) => ({ role, text })
+const chat = Array.from({ length: 20 }, (_, i) => turn(i % 2 ? 'model' : 'user', `m${i}`))
+chat.push(turn('user', 'last'))
+const win = chatWindow(chat)
+assert.ok(win.length <= 13, 'never more than 13 turns')
+assert.equal(win[0].role, 'user', 'a window opens on a user turn')
+assert.equal(win.at(-1).text, 'last', 'the newest message is always sent')
+// budget is UTF-8 bytes: 9000 Burmese characters are 27000 bytes, over the cap
+const burmese = 'မ'.repeat(9000)
+assert.deepEqual(chatWindow([turn('user', burmese), turn('model', 'ok'), turn('user', 'hi')]).map(m => m.text), ['hi'],
+  'old turns drop once the byte budget is spent, and the window still opens on a user turn')
+assert.equal(chatWindow([turn('user', burmese + burmese)]).length, 1, 'an oversized newest message is still sent, so Rust can explain')
+
+console.log('ok — companion chat window')
