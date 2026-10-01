@@ -17,8 +17,22 @@ The news feed never appears on the laptop, and the focus tools never appear as
 a nav item on the phone. This is the core design principle — **don't "unify"
 the two platforms.** If a feature seems missing on one, that's usually intent.
 
-No accounts, no server, no telemetry. SQLite for transient state, markdown in
+No accounts, no telemetry. SQLite for transient state, markdown in
 `Documents/ZyneVault/` for anything the user should keep.
+
+Two deliberate exceptions to "no server", both added with the companion work
+and both **off unless you turn them on**:
+
+- **LAN pairing** (`companion.rs`) runs a `tiny_http` listener on `0.0.0.0:0`
+  so a phone can reach the laptop directly. Every request needs
+  `Authorization: Bearer <64-hex>`, compared in constant time before routing;
+  the client side refuses any address that is not private, loopback or
+  link-local; the listener stops itself after 30 minutes. Nothing leaves the
+  local network.
+- **Gemini chat** (`ai_chat`) is opt-in and needs a key you import yourself.
+  The key lives in `gemini-private.json` in app data — `0o600` on unix, never
+  in the JS bundle and never in a sync payload. Chat text does go to Google
+  when enabled, which is the one place Zyne talks to a third party.
 
 ## Layout
 
