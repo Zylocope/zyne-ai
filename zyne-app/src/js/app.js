@@ -599,36 +599,58 @@ function renderSoundChips() {
 }
 
 // ─── daily card ──────────────────────────────────────────────
-// One card a day. It is drawn, not displayed — the draw is the point —
-// and once drawn it stays until tomorrow. A line to sit with rides
-// underneath; tap it for a different one.
+// One card a day, shaped like a card rather than another journal row.
+// It starts face down — the draw is the point — flips once when you
+// draw it, and stays until tomorrow. A line to sit with rides alongside.
 let todayLine = randomLine()
 
-async function renderDailyCard() {
+// Drawn marks, not geometry: branch · vessel · feather · seed · moon.
+const SUIT_MARK = {
+  wands:     '<path d="M20 35V13M20 20c-5-1-8-5-8-10 5 0 8 3 9 7M20 24c5-1 9-4 10-10-6 0-9 3-10 7"/>',
+  cups:      '<path d="M11 11h18l-2 11a7 7 0 0 1-14 0L11 11ZM20 29v6M14 35h12"/>',
+  swords:    '<path d="M20 5c5 7 6 15 3 22l-3 8-3-8c-3-7-2-15 3-22ZM20 9v20"/>',
+  pentacles: '<path d="M20 7c7 4 11 9 11 15a11 11 0 0 1-22 0c0-6 4-11 11-15ZM20 14v12"/>',
+  major:     '<path d="M25.5 6.5a11 11 0 1 0 8.2 16.6A12.5 12.5 0 0 1 25.5 6.5Z"/><path d="M9 9.5l1.1 2.6 2.6 1.1-2.6 1.1L9 16.9l-1.1-2.6L5.3 13.2l2.6-1.1L9 9.5Z"/>',
+  back:      '<circle cx="20" cy="20" r="9"/><path d="M20 4v5M20 31v5M4 20h5M31 20h5"/>',
+}
+const suitSvg = (suit, size) =>
+  `<svg width="${size}" height="${size}" viewBox="0 0 40 40" fill="none" stroke="currentColor"
+     stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${SUIT_MARK[suit] || SUIT_MARK.major}</svg>`
+
+// `animate` is only true for a fresh draw: the flip class is added a frame
+// later so the transition has a previous state to run from. On load the
+// class ships in the markup, so a drawn card is simply already face up.
+async function renderDailyCard(animate = false) {
   const host = document.getElementById('dailyCard')
   if (!host) return
   const today = toISODate(new Date())
   const [day, idx] = ((await getSetting('tarot_drawn')) || '').split('|')
   const card = day === today ? CARDS[Number(idx)] : null
-  host.innerHTML = `<div class="j-section-label">TODAY</div>` + (card ? `
-    <div class="j-row daily-row">
-      <div class="daily-suit ${card.suit}"></div>
-      <div class="j-text">
-        <div class="j-title">${esc(card.name)}</div>
-        <div class="j-meta">${esc(card.image)}</div>
-        <div class="daily-keys">${esc(card.keys)}</div>
+  const faceUp = card && !animate ? ' flipped' : ''
+
+  host.innerHTML = `<div class="j-section-label">TODAY</div>
+    <div class="daily-wrap">
+      <div class="daily-flip${faceUp}" id="dailyFlip">
+        <button class="tcard tback" onclick="window.drawDailyCard()" ${card ? 'tabindex="-1" aria-hidden="true"' : ''}
+                aria-label="Draw today's card">
+          <span class="tmark">${suitSvg('back', 34)}</span>
+        </button>
+        <div class="tcard tfront ${card ? esc(card.suit) : ''}">${card ? `
+          <span class="tmark">${suitSvg(card.suit, 40)}</span>
+          <div class="tname">${esc(card.name)}</div>
+          <div class="timg">${esc(card.image)}</div>
+          <div class="tkeys">${esc(card.keys)}</div>` : ''}
+        </div>
       </div>
-    </div>` : `
-    <button class="j-row daily-row daily-draw" onclick="window.drawDailyCard()">
-      <div class="daily-suit back"></div>
-      <div class="j-text">
-        <div class="j-title">Draw today's card</div>
-        <div class="j-meta">one card, once a day</div>
+      <div class="daily-aside">
+        ${card ? '' : '<div class="daily-hint">Tap to draw<br>today\'s card</div>'}
+        <button class="daily-line" onclick="window.shuffleLine()" aria-label="Another line">
+          ${esc(todayLine.text)}${todayLine.who ? ` <span class="daily-who">${esc(todayLine.who)}</span>` : ''}
+        </button>
       </div>
-    </button>`) + `
-    <button class="daily-line" onclick="window.shuffleLine()" aria-label="Another line">
-      ${esc(todayLine.text)}${todayLine.who ? ` <span class="daily-who">${esc(todayLine.who)}</span>` : ''}
-    </button>`
+    </div>`
+
+  if (animate) requestAnimationFrame(() => document.getElementById('dailyFlip')?.classList.add('flipped'))
 }
 
 // Drawing writes the card into today's journal, the way a finished
@@ -637,7 +659,7 @@ async function drawDailyCard() {
   const today = toISODate(new Date())
   const i = drawIndex()
   await setSetting('tarot_drawn', `${today}|${i}`)
-  await renderDailyCard()
+  await renderDailyCard(true)
   try {
     await addEntry(today, 'note', `Card: ${CARDS[i].name} — ${CARDS[i].keys}`)
     await loadJournal()

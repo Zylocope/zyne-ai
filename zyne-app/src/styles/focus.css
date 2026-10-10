@@ -223,31 +223,77 @@
 .icon-btn-sm { width: 34px; height: 34px; border-radius: 10px; }
 
 /* ─── daily card ───────────────────────────────────────────── */
-.daily-card { margin-bottom: 10px; }
-.daily-row { align-items: flex-start; width: 100%; text-align: left; }
-.daily-draw { cursor: pointer; font: inherit; color: inherit; }
-.daily-draw:active { transform: translateY(1px); }
-.daily-keys { font-size: 10px; color: var(--muted); margin-top: 5px; letter-spacing: .04em; text-transform: uppercase; }
-/* element mark: fire ▲ · water ▽ · air ◇ · earth ■ · major ✦ */
-.daily-suit {
-  flex: 0 0 34px; height: 34px; margin-top: 1px;
-  display: flex; align-items: center; justify-content: center;
-  border: 1px solid var(--border2); border-radius: 9px;
-  background: var(--well); box-shadow: var(--inset-well);
-  font-size: 13px; color: var(--muted);
+/* A card, not a journal row: 2:3 portrait with the inner rule real
+   tarot cards carry. Face down until drawn; the line sits alongside so
+   the whole block stays about as tall as the old bar. */
+.daily-card { margin-bottom: 14px; }
+.daily-wrap { display: flex; gap: 14px; align-items: flex-start; }
+
+.daily-flip { flex: 0 0 150px; aspect-ratio: 2 / 3; position: relative; perspective: 900px; }
+.daily-flip > .tcard {
+  position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  transition: transform .62s cubic-bezier(.22,.78,.3,1);
 }
-.daily-suit.major::before     { content: "✦"; color: var(--hand); }
-.daily-suit.wands::before     { content: "▲"; color: var(--proj); }
-.daily-suit.cups::before      { content: "▽"; color: var(--learn); }
-.daily-suit.swords::before    { content: "◇"; color: var(--skeptic); }
-.daily-suit.pentacles::before { content: "■"; color: var(--pers); }
-.daily-suit.back::before      { content: "✧"; }
-/* a line to sit with — quiet, tap for another */
+.tback  { transform: rotateY(0deg);    cursor: pointer; }
+.tfront { transform: rotateY(180deg); }
+.daily-flip.flipped .tback  { transform: rotateY(-180deg); }
+.daily-flip.flipped .tfront { transform: rotateY(0deg); }
+.daily-flip.flipped .tback { pointer-events: none; }
+
+.tcard {
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 12px; box-shadow: var(--raise-md);
+  padding: 11px; display: flex; flex-direction: column; align-items: center;
+  font: inherit; color: var(--text); text-align: center; overflow: hidden;
+}
+.tcard::before {
+  content: ""; position: absolute; inset: 5px; pointer-events: none;
+  border: 1px solid var(--border); border-radius: 8px;
+}
+.tmark { height: 46px; display: flex; align-items: center; justify-content: center; margin-top: 8px; }
+.tname {
+  font-family: "Instrument Serif", Georgia, serif; font-size: 20px; line-height: 1.12;
+  margin-top: 8px; padding: 0 4px;
+}
+.timg {
+  font-family: "Instrument Serif", Georgia, serif; font-style: italic; font-size: 11.5px;
+  color: var(--muted); line-height: 1.4; margin-top: 7px; padding: 0 4px;
+}
+.tkeys {
+  margin-top: auto; padding-top: 8px; width: 100%; border-top: 1px solid var(--border);
+  font-size: 7.5px; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--muted); line-height: 1.5;
+}
+/* suit colours ride on currentColor through the mark's stroke */
+.tfront.major     { color: var(--hand); }
+.tfront.wands     { color: var(--proj); }
+.tfront.cups      { color: var(--learn); }
+.tfront.swords    { color: var(--skeptic); }
+.tfront.pentacles { color: var(--pers); }
+.tfront .tname, .tfront .timg, .tfront .tkeys { color: var(--text); }
+.tfront .timg, .tfront .tkeys { color: var(--muted); }
+
+/* the back: a quiet dotted field, nothing to read */
+.tback { background: var(--well); justify-content: center; color: var(--border2); }
+.tback::after {
+  content: ""; position: absolute; inset: 5px; border-radius: 8px; opacity: .6;
+  background-image: radial-gradient(circle, var(--border2) 1px, transparent 1.2px);
+  background-size: 13px 13px;
+}
+.tback .tmark { position: relative; z-index: 1; margin: 0; }
+.tback:active { transform: rotateY(0deg) translateY(1px); }
+
+.daily-aside { flex: 1; padding-top: 2px; min-width: 0; }
+.daily-hint { font-size: 9.5px; letter-spacing: .08em; color: var(--muted); margin-bottom: 10px; line-height: 1.6; }
 .daily-line {
   display: block; width: 100%; text-align: left; cursor: pointer;
-  background: none; border: none; padding: 2px 4px 0;
+  background: none; border: none; padding: 0;
   font-family: "Instrument Serif", Georgia, serif; font-style: italic;
-  font-size: 13px; line-height: 1.5; color: var(--muted);
+  font-size: 15px; line-height: 1.5; color: var(--muted);
 }
 .daily-line:active { color: var(--text); }
 .daily-who { font-style: normal; font-size: 10px; opacity: .7; white-space: nowrap; }
+
+@media (prefers-reduced-motion: reduce) {
+  .daily-flip > .tcard { transition: none; }
+}

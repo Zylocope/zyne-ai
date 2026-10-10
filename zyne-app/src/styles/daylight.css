@@ -72,9 +72,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, [tabindex]:fo
 .timer-phase { font-family: inherit; }
 .method-benefit { font-size: 12px; }
 .daily-card { margin-bottom: 18px; }
-.daily-row { padding: 15px; background: var(--surface); }
-.daily-suit { background: #f0eaf5; border: 0; }
-.daily-line { font-size: 16px; padding: 6px 4px 0; }
+.daily-line { font-size: 16px; }
 .sound-bar { margin-top: 18px; }
 .j-section-label { font-family: inherit; letter-spacing: 1.5px; font-size: 10px; }
 .j-title { font-size: 14px; }
