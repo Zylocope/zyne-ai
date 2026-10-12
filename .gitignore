@@ -2,6 +2,7 @@
 node_modules/
 
 # ── build output ──────────────────────────────────────────────
+releases/
 dist/
 target/
 
@@ -25,8 +26,8 @@ apikey.txt
 # ── editor / tooling / OS ─────────────────────────────────────
 .idea/
 .vscode/
-# ignore .claude contents but keep shared slash commands
-.claude/*
-!.claude/commands/
+# ignore .claude contents (any folder) but keep shared slash commands
+**/.claude/*
+!**/.claude/commands/
 .DS_Store
 Thumbs.db

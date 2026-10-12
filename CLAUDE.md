@@ -154,6 +154,11 @@ night <link> | Label | minutes  once-a-night ritual; own card, done-for-today ma
 
 ## Commands
 
+**Releasing:** `UPDATE.bat` at the repo root (runs `update.ps1`) bumps the patch
+version in package.json / tauri.conf.json / Cargo.toml, runs the self-check,
+builds both apps and copies them to `releases/` (git-ignored; older builds go to
+`releases/old/`). User-facing guide: `HOW-TO-UPDATE.md`. Keep that flow working.
+
 ```bash
 pnpm install
 pnpm tauri dev                                     # desktop

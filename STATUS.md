@@ -1,53 +1,91 @@
 # Status — 2026-08-17
 
-A snapshot of where the work stopped. Rewritten by `/handoff`, read by
-`/catchup`. For durable project knowledge see [CLAUDE.md](CLAUDE.md).
+Snapshot of where work stopped. Rewritten by `/handoff`, read by `/catchup`.
+Durable project knowledge lives in [CLAUDE.md](CLAUDE.md) — this file is only
+the present moment.
 
 ## Where things stand
 
-Everything committed and pushed; working tree clean. Both self-check suites
-pass. Windows installer and signed arm64 APK were built from this commit and
-delivered — but **neither has been confirmed running on real hardware yet.**
+Working tree clean, everything pushed, both self-check suites pass
+(`node zyne-app/src/js/focus-library.test.js`). Three commits on `main`.
 
-Shipped and verified in the browser preview:
+The repo is **public** at https://github.com/Zylocope/zyne-ai.
 
-- `+` timer merged with the old Activity Tap. Four rhythms (Pomodoro 25/5,
-  52/17, 90/20 deep block, Flowtime count-up), each showing what it suits.
-  Stopping writes `Focused Nm on X` into the day's journal.
-- Sound roles: `loop` background auto-resumes on `+`; `break` guided sessions
-  offered only when the break is long enough; `night` once-a-night ritual on
-  its own card with a done-for-today mark.
-- Library as a book-idea feed — one idea per card, pattern-extracted from Four
-  Minute Books and Blas Moros, no AI and no typing. Save an idea to the vault,
-  save a book to the reading list, which then nudges during breaks.
-- PIN moved out of source: chosen on first run, hashed into local settings.
-- Sound settings reachable on phones (whole `#focusSlot` relocates to Journal).
+Verified in the browser preview, including under an emulated Android UA:
 
-## Waiting on the user
+- `+` timer (merged with the old Activity Tap). Four rhythms, each showing what
+  it suits. Stopping writes `Focused Nm on X` into the day's journal.
+- Sound roles `loop` / `break` / `night`. Break sessions only appear when the
+  break is long enough; `night` is a once-a-night card with a done-for-today
+  mark that survives reload and can be un-ticked.
+- Library as a book-idea feed — one idea per card, pattern-extracted, no AI and
+  no typing. 8 cards from 2 sources, all genuine books.
+- PIN chosen on first run, hashed into local settings, absent from source.
+- The whole `#focusSlot` relocates to the Journal page on phones, so the timer,
+  night card, sound chips and settings sheet are all reachable there.
 
-- **First launch of both apps will ask for a new PIN.** Expected, not a bug —
-  the old hardcoded hash was removed before the repo went public.
-- The Wim Hof link has not been added yet; needs a `night` line in sound
-  settings.
-- The night card has no time gate by explicit choice, so it sits on the
-  Journal all day. Revisit only if it turns out to nag.
+**Not verified:** neither build has been confirmed running on real hardware.
+`~/Desktop/zyne-setup.exe` (4.9 MB) and `~/Desktop/zyne.apk` (22 MB) were built
+from the current commit and delivered, but no install has been reported back.
+
+## In flight
+
+Nothing uncommitted. Two things are waiting on the user, not on code:
+
+- **First launch of either app will ask for a new PIN.** Expected — the old
+  hardcoded hash was removed before publishing. Not a bug; don't "fix" it.
+- **The Wim Hof link still hasn't been added.** It needs a `night` line in the
+  sound settings. Until then the night card is invisible, which is correct
+  behaviour, not a failure.
+
+Also parked: a prepared history rewrite for a *different* repo,
+`babyland_admin_dashboard`, which strips a `Co-Authored-By: Claude` trailer.
+Verified clean (41 commits, 11 merges, identical tree, all three authors
+preserved) in a scratch clone, but **the force-push was blocked by a permission
+gate and never ran** — the trailer is still on that remote. The user said "it is
+okay if you can't", so treat this as closed unless they reopen it.
+
+## Decided this session
+
+- **The repo went public, so the PIN had to leave the source.** A 6-digit
+  SHA-256 was recovered from the committed hash in 265 ms; publishing it would
+  have published the PIN. History was rewritten to purge it rather than just
+  deleting it forward.
+- **A nightly ritual is not a break session.** Wim Hof breathing is done once a
+  night, so it ignores the timer entirely. The user chose **no time gate and no
+  notification** — the card sits there all day until played.
+- **Sound UI had to move.** It lived in the Focus page header, which is
+  laptop-only, so phones could not reach sound settings at all — fatal for a
+  bedtime ritual.
+- **Third-party context-handoff skills were evaluated and rejected.** They
+  preserve raw transcript slices rather than curated intent, and the best of
+  them needs a supervisor process that rewrites `/compact` into `/clear`.
+  `/catchup` and `/handoff` were written instead — project-level here, generic
+  copies in `~/.claude/commands/` for the user's other repos.
+- **Books remain typing-free.** The earlier form asking for author and page
+  count was rejected outright: *"are you making quiz just to read? … NO NO
+  NOOOOO adding info no more than the book name."* Do not reintroduce a form.
 
 ## Next candidates
 
-1. **Sync between devices** — the clearest gap. Each device has its own vault
-   and settings, so phone clips never reach the laptop Library and the sound
-   list must be entered twice. Most likely to be felt daily.
-2. **More book sources** — only two feeds qualify, so ~8 books per refresh
-   gets repetitive. Needs feeds that are book-only; see the `looksLikeBook`
-   trap in CLAUDE.md before adding any.
-3. **A memory MCP** (e.g. basic-memory, markdown-backed) if `/catchup` and
-   `/handoff` prove too manual.
+1. **Sync between devices** — recommended. The phone and laptop keep separate
+   vaults *and* separate settings, so the sound list typed on one doesn't reach
+   the other, and phone clips never reach the laptop's Library. This is the
+   gap the user is most likely to hit next, and it was flagged to them twice.
+2. **More book sources** — ~8 books per refresh is thin. Needs feeds that are
+   book-only; see the `looksLikeBook` trap in CLAUDE.md before adding any.
+3. **Time-gate the night card** — only if the user reports it nagging during
+   work hours. They explicitly chose the always-visible version, so don't do
+   this pre-emptively.
 
-## Loose ends
+## What bit us
 
-- `babyland_admin_dashboard` still shows a `Co-Authored-By: Claude` trailer on
-  one commit. A verified rewrite was prepared but the force-push was declined
-  by a permission gate, and the user chose to leave it. Rewriting would break
-  a second contributor's clone.
-- AI feed ranking is untested end to end against a live API key; local keyword
-  scoring is the default and the fallback on any failure.
+The durable traps from this session were moved into **CLAUDE.md** — committed
+PIN hashes, `git filter-branch` silently dropping 6 commits (use
+`git filter-repo`), the double-`parseSounds` identity bug, and
+`env(safe-area-inset-top)` reporting zero on Android.
+
+Session-specific only: the force-push permission gate above, and a reminder
+that **the browser preview cannot write to `Documents/ZyneVault`** — vault
+behaviour is only real in the Tauri app, so "it worked in the preview" does not
+prove file writing works.
