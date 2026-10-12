@@ -1,0 +1,111 @@
+/* ─────────────────────────────────────────────────────────────
+   GLASS — phone only. A floating Liquid-Glass nav bar over a soft
+   gradient, with a droplet that slides to the active page.
+   Light version on purpose: backdrop blur + layered highlights, no SVG
+   displacement filter (that one stutters on Android WebView).
+   Selectors carry html.is-mobile to outrank daylight.css.
+   ───────────────────────────────────────────────────────────── */
+html.is-mobile {
+  --glass-tint: #ffffff66;
+  --glass-edge: #ffffffb3;
+  --drop-a: #3e7155;
+  --drop-b: #4f9a86;
+  --drop-c: #c9a76a;
+  --nav-h: 72px;
+  --nav-gap: max(12px, env(safe-area-inset-bottom));
+}
+
+/* a soft dawn mesh behind everything, so the glass has colour to bend */
+html.is-mobile, html.is-mobile body {
+  background:
+    radial-gradient(90% 55% at 0% 0%, #dcebdc 0%, #dcebdc00 60%),
+    radial-gradient(80% 50% at 100% 18%, #f6e3cc 0%, #f6e3cc00 60%),
+    radial-gradient(90% 60% at 30% 100%, #d9e6ef 0%, #d9e6ef00 65%),
+    radial-gradient(70% 45% at 100% 85%, #ece0f1 0%, #ece0f100 60%),
+    #f6f5ef;
+  background-attachment: fixed;
+}
+html.is-mobile .page-header { background: #f6f5ef8c; backdrop-filter: blur(14px) saturate(150%); -webkit-backdrop-filter: blur(14px) saturate(150%); border-bottom-color: #ffffff80; }
+
+/* content scrolls under the bar; the journal keeps its composer above it */
+html.is-mobile .scroll-area { padding-bottom: calc(var(--nav-h) + var(--nav-gap) + 24px); }
+html.is-mobile #page-journal { padding-bottom: calc(var(--nav-h) + var(--nav-gap) + 8px); }
+html.is-mobile #page-journal .scroll-area { padding-bottom: 20px; }
+html.is-mobile .composer { background: #fffefbcc; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top-color: #ffffff90; }
+
+/* ─── the bar ─── */
+html.is-mobile .bottom-nav {
+  position: fixed; z-index: 50;
+  left: 14px; right: 14px; bottom: var(--nav-gap);
+  height: var(--nav-h); padding: 8px; gap: 4px;
+  border-radius: 30px;
+  border: 1px solid var(--glass-edge);
+  background:
+    linear-gradient(160deg, #ffffffa6 0%, #ffffff40 45%, #ffffff26 60%, #ffffff66 100%),
+    var(--glass-tint);
+  backdrop-filter: blur(20px) saturate(190%) brightness(1.04);
+  -webkit-backdrop-filter: blur(20px) saturate(190%) brightness(1.04);
+  box-shadow:
+    inset 0 1.5px 0 #ffffffe6,          /* top rim catching light */
+    inset 0 -1px 0 #ffffff59,           /* bottom rim */
+    inset 0 0 22px #ffffff40,           /* thickness glow */
+    inset 0 -10px 18px -12px #3e715526, /* tint pooling at the bottom */
+    0 12px 32px -8px #293d3240,
+    0 2px 6px #293d321a;
+  overflow: hidden;
+}
+/* specular streak across the top */
+html.is-mobile .bottom-nav::before {
+  content: ""; position: absolute; left: 10%; right: 10%; top: 1px; height: 45%;
+  border-radius: 30px 30px 50% 50% / 30px 30px 100% 100%;
+  background: linear-gradient(180deg, #ffffff8c, #ffffff00);
+  pointer-events: none; z-index: 0;
+}
+/* faint chromatic edge, like light splitting at the rim */
+html.is-mobile .bottom-nav::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 0;
+  padding: 1px;
+  background: linear-gradient(120deg, #9fd3c0aa, #ffffff00 30%, #ffffff00 70%, #f2c49baa);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+}
+
+html.is-mobile .nav-item {
+  position: relative; z-index: 2; min-height: 0; height: 100%;
+  border-radius: 22px; border: 0; background: transparent; box-shadow: none;
+  color: #4b5a50; gap: 3px; transition: color .3s, transform .15s;
+}
+html.is-mobile .nav-item:active { transform: scale(.93); }
+html.is-mobile .nav-item.active { background: transparent; box-shadow: none; color: #fff; }
+html.is-mobile .nav-item.active svg { filter: drop-shadow(0 1px 2px #1d3a2a66); }
+html.is-mobile .nav-label { font-size: 10.5px; font-weight: 600; letter-spacing: .3px; }
+
+/* ─── the droplet under the active item ─── */
+.nav-drop {
+  position: absolute; z-index: 1; top: 8px; bottom: 8px; left: 8px; width: 0;
+  border-radius: 22px;
+  background:
+    radial-gradient(120% 90% at 30% 0%, #ffffff59 0%, #ffffff00 55%),
+    linear-gradient(135deg, var(--drop-a) 0%, var(--drop-b) 62%, var(--drop-c) 130%);
+  box-shadow:
+    inset 0 1px 0 #ffffff80,
+    inset 0 -2px 6px #0000001f,
+    0 6px 16px -4px #3e7155a6;
+  transition: left .55s cubic-bezier(.2, 1.3, .35, 1), width .45s cubic-bezier(.2, 1.2, .35, 1);
+  pointer-events: none;
+}
+.nav-drop.moving { animation: dropSquish .55s cubic-bezier(.3, .9, .3, 1); }
+@keyframes dropSquish {
+  0%   { transform: scale(1, 1); }
+  35%  { transform: scale(1.18, .82); }
+  70%  { transform: scale(.95, 1.05); }
+  100% { transform: scale(1, 1); }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  html.is-mobile .bottom-nav { background: #fffefbf2; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav-drop { transition: none; }
+  .nav-drop.moving { animation: none; }
+}

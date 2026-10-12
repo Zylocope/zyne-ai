@@ -61,6 +61,8 @@ zyne-app/
   src/styles/             main.css (theme) · feed.css · focus.css · daylight.css
                           (daylight.css is load-bearing, not optional — it defines
                            the focus welcome block and timer idle copy)
+                          glass.css: phone-only floating Liquid-Glass nav + gradient
+                          background; backdrop blur only, no SVG displacement (Android lag)
   src-tauri/              Rust shell; gen/ is generated and git-ignored
 ```
 

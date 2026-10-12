@@ -96,6 +96,8 @@ async function init() {
 
   await renderFeedFromDb()
   if (IS_PHONE) {
+    moveNavDrop()
+    window.addEventListener('resize', () => moveNavDrop())
     refreshFeed()                 // phone reads the news feed, so fetch everything
   } else {
     switchPage('focus')           // laptop opens on work, not browsing
@@ -130,6 +132,23 @@ function switchPage(page) {
   document.getElementById('page-' + page)?.classList.add('active')
   document.getElementById('nav-'  + page)?.classList.add('active')
   if (page === 'companion') renderConflicts()
+  moveNavDrop(true)
+}
+
+// Phone: a glass droplet slides under the active nav item (glass.css).
+function moveNavDrop(animate = false) {
+  if (!IS_PHONE) return
+  const nav = document.querySelector('.bottom-nav')
+  const item = nav?.querySelector('.nav-item.active')
+  if (!nav || !item) return
+  let drop = nav.querySelector('.nav-drop')
+  if (!drop) { drop = document.createElement('span'); drop.className = 'nav-drop'; nav.prepend(drop) }
+  const n = nav.getBoundingClientRect(), r = item.getBoundingClientRect()
+  if (!animate) drop.style.transition = 'none'
+  drop.style.left = `${r.left - n.left}px`
+  drop.style.width = `${r.width}px`
+  if (!animate) { void drop.offsetWidth; drop.style.transition = '' ; return }
+  drop.classList.remove('moving'); void drop.offsetWidth; drop.classList.add('moving')
 }
 
 // ═════════════════════════════════════════════════════════════
