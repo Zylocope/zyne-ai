@@ -5,6 +5,12 @@ pub fn run() {
     tauri::Builder::default()
         .manage(companion::Companion::default())
         .plugin(tauri_plugin_dialog::init())
+        .setup(|_app| {
+            // phones scan the laptop's pairing QR; desktops have nothing to scan with
+            #[cfg(mobile)]
+            _app.handle().plugin(tauri_plugin_barcode_scanner::init())?;
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             companion::companion_load, companion::companion_save,
             companion::ai_status, companion::ai_configure, companion::ai_chat, companion::ai_suggest, companion::ai_lens,

@@ -63,6 +63,8 @@ zyne-app/
                            the focus welcome block and timer idle copy)
                           glass.css: phone-only floating Liquid-Glass nav + gradient
                           background; backdrop blur only, no SVG displacement (Android lag)
+                          settings.css: the Settings panel (slide-in page; grouped list,
+                          one section at a time). Replaced the old floating sheets.
   src-tauri/              Rust shell; gen/ is generated and git-ignored
 ```
 
@@ -112,7 +114,7 @@ as 0, so headers use `max(env(...), 30px)`. Selectors carry `html`/`.is-mobile`
 prefixes purely to outrank an id selector — don't "simplify" them away.
 
 **`#focusSlot` moves.** On phones, JS relocates the whole slot (timer, break
-panel, night card, sound chips, settings sheet) into the Journal page. Anything
+panel, night card, sound chips) into the Journal page. Anything
 that must work on both platforms belongs *inside* that slot — the Focus page
 header is laptop-only.
 
@@ -143,6 +145,21 @@ Under the card sits **Today's lens** (`ai_lens`, coach.js): Mind (thinking),
 Heart (feelings), People (social) and one if–then plan the user can add to
 the journal. The card is a theme, never a prediction. Without AI it uses
 `LOCAL_LENS` per suit; AI results are cached per day as `tarot_lens`.
+
+**Feed requests have deadlines.** `httpGet` aborts after 10 s and each source
+is capped at 20 s (`withTimeout` in feed.js); ranking is capped at 30 s and
+the refresh spinner stops as soon as items render. Without this, one site
+that never answers kept the spinner going forever.
+
+**Showcase = a source group.** Lines under a `# ── Showcase` header in the
+sources text feed the Showcase chip (matched by source display name, so no DB
+change). Seed v4 appends `SHOWCASE_SOURCES` to an existing list instead of
+resetting it. Show HN (hnrss, 50+ points) was verified live; reddit couldn't be
+fetched from the dev environment but uses the same fetcher as the other subs.
+
+**QR pairing.** The laptop renders the pairing code as an SVG QR (`qrcode`,
+local). The phone scans with `tauri-plugin-barcode-scanner` (mobile-only
+dependency, `capabilities/mobile.json`); paste stays as a fallback.
 
 ## Sound roles
 

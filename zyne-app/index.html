@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="/src/styles/focus.css">
   <link rel="stylesheet" href="/src/styles/daylight.css">
   <link rel="stylesheet" href="/src/styles/glass.css">
+  <link rel="stylesheet" href="/src/styles/settings.css">
 </head>
 <body>
 <div class="app">
@@ -45,21 +46,8 @@
       <button class="chip" data-kind="video" onclick="setKindFilter('video')">Videos</button>
       <button class="chip" data-kind="article" onclick="setKindFilter('article')">Articles</button>
       <button class="chip" data-kind="post" onclick="setKindFilter('post')">Community</button>
+      <button class="chip" data-kind="showcase" onclick="setKindFilter('showcase')">Showcase</button>
       <button class="chip" data-kind="idea" onclick="setKindFilter('idea')">Books</button>
-    </div>
-
-    <!-- SETTINGS (API key · interest profile · sources) -->
-    <div id="settingsSheet" class="feed-sheet" style="display:none">
-      <label class="sheet-label" for="apiKeyInput">Anthropic API key <span class="sheet-sub">— optional. Without it the feed is ranked locally by keyword, free. With it, Haiku ranks and writes hooks (~1-3¢ per refresh). Stored only on this device.</span></label>
-      <input class="input-field" id="apiKeyInput" type="password" placeholder="sk-ant-..." autocomplete="off">
-
-      <label class="sheet-label" for="profileText">Interest profile <span class="sheet-sub">— drives both ranking modes. Keep the <code>SCORE 0-2</code> line: everything above it counts as signal, below as noise.</span></label>
-      <textarea id="profileText" spellcheck="false" style="height:170px"></textarea>
-
-      <label class="sheet-label" for="sourcesText">Sources <span class="sheet-sub">— one per line: <code>youtube &lt;channelId&gt;</code> · <code>reddit &lt;sub&gt;</code> · <code>rss &lt;url&gt;</code> · <code>github &lt;owner/repo&gt;</code> · <code>gnews &lt;topic&gt;</code> · <code>hn front</code>. Add <code>| Name</code> for a label, <code>#</code> to comment out.</span></label>
-      <textarea id="sourcesText" spellcheck="false"></textarea>
-
-      <button class="btn-primary" style="font-size:13px;padding:10px" onclick="saveSettings()">SAVE &amp; REFRESH</button>
     </div>
 
     <div class="scroll-area" id="feedList">
@@ -172,11 +160,6 @@
           </div>
           <div class="chip-row" id="soundChips"></div>
         </div>
-        <div id="focusSettings" class="feed-sheet" style="display:none">
-      <label class="sheet-label" for="soundsText">Focus sounds <span class="sheet-sub">— one per line: <code>&lt;youtube link&gt; | Label</code>. The player stays visible because YouTube's policy forbids hiding it.</span></label>
-      <textarea id="soundsText" spellcheck="false" style="height:110px"></textarea>
-      <button class="btn-primary" style="font-size:13px;padding:10px" onclick="saveFocusSettings()">SAVE</button>
-    </div>
       </div>
     </div>
 
@@ -220,7 +203,8 @@
     <div class="scroll-area" id="companionScroll">
       <div class="j-section-label">SYNC</div>
       <div class="feed-sheet desktop-only">
-        <label class="sheet-label" for="pairCode">Pair with your phone <span class="sheet-sub">— same Wi-Fi only. Start here, then paste the code into Companion on your phone. Pairing stops by itself after 30 minutes.</span></label>
+        <label class="sheet-label" for="pairCode">Pair with your phone <span class="sheet-sub">— same Wi-Fi only. Start here, then scan the QR with Companion → Scan QR on your phone. Pairing stops by itself after 30 minutes.</span></label>
+        <div class="pair-qr" id="pairQr" hidden></div>
         <input class="input-field" id="pairCode" readonly placeholder="No pairing running" onclick="this.select()">
         <div class="companion-actions">
           <button class="btn-primary" style="font-size:13px;padding:10px" id="pairStartBtn" onclick="startPairing()">START PAIRING</button>
@@ -229,9 +213,12 @@
         </div>
       </div>
       <div class="feed-sheet mobile-only">
-        <label class="sheet-label" for="joinCode">Sync with your laptop <span class="sheet-sub">— on the laptop open Companion → Start pairing, then paste its code here. Same Wi-Fi only.</span></label>
-        <input class="input-field" id="joinCode" placeholder="192.168.…#…" autocomplete="off" autocapitalize="off" spellcheck="false">
-        <button class="btn-primary" style="font-size:13px;padding:10px" id="joinBtn" onclick="joinPairing()">SYNC NOW</button>
+        <label class="sheet-label" for="joinCode">Sync with your laptop <span class="sheet-sub">— on the laptop open Companion → Start pairing, then scan the QR it shows. Same Wi-Fi only.</span></label>
+        <button class="btn-primary" style="font-size:14px;padding:12px" id="scanBtn" onclick="scanPairCode()">SCAN QR</button>
+        <details class="pair-manual"><summary>Or paste the code</summary>
+          <input class="input-field" id="joinCode" placeholder="192.168.…#…" autocomplete="off" autocapitalize="off" spellcheck="false">
+          <button class="btn-mini" id="joinBtn" onclick="joinPairing()">SYNC NOW</button>
+        </details>
       </div>
       <div class="composer-hint" id="syncStatus" role="status"></div>
       <div id="conflictList"></div>
@@ -250,6 +237,82 @@
       <div class="j-section-label">GEMINI CHAT</div>
       <div id="aiPanel" class="feed-sheet"></div>
       <div class="composer-hint" id="aiStatus" role="status"></div>
+    </div>
+  </div>
+
+
+  <!-- SETTINGS: its own panel. A short list; each section opens on its own. -->
+  <div id="settingsPanel" class="settings-panel" hidden>
+    <div class="sp-sheet" role="dialog" aria-modal="true" aria-labelledby="spTitle">
+      <div class="sp-head">
+        <button class="sp-btn" id="spBack" onclick="settingsBack()" aria-label="Back">‹</button>
+        <div class="sp-title" id="spTitle">Settings</div>
+        <button class="sp-btn" onclick="closeSettings()" aria-label="Close">×</button>
+      </div>
+      <div class="sp-body">
+        <div class="sp-view" data-view="home">
+          <div class="sp-group-label">FEED</div>
+          <div class="sp-list">
+        <button class="sp-row" onclick="openSettings('sources')">
+          <span class="sp-ic"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M4 11a9 9 0 019 9"/><path d="M4 4a16 16 0 0116 16"/><circle cx="5" cy="19" r="1"/></svg></span>
+          <span class="sp-txt"><b>Sources</b><small id="spSourcesSub">Where your feed and books come from</small></span>
+          <span class="sp-go" aria-hidden="true">›</span>
+        </button>
+        <button class="sp-row" onclick="openSettings('interests')">
+          <span class="sp-ic"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 21s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 11c0 5.6-7 10-7 10z"/></svg></span>
+          <span class="sp-txt"><b>Interests</b><small id="spInterestsSub">What gets ranked up, and what gets hidden</small></span>
+          <span class="sp-go" aria-hidden="true">›</span>
+        </button>
+        <button class="sp-row" onclick="openSettings('ranking')">
+          <span class="sp-ic"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 3l2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5z"/></svg></span>
+          <span class="sp-txt"><b>Smart ranking</b><small id="spRankingSub">Optional: Claude ranks the feed</small></span>
+          <span class="sp-go" aria-hidden="true">›</span>
+        </button>
+          </div>
+          <div class="sp-group-label">FOCUS</div>
+          <div class="sp-list">
+        <button class="sp-row" onclick="openSettings('sounds')">
+          <span class="sp-ic"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></span>
+          <span class="sp-txt"><b>Focus sounds</b><small id="spSoundsSub">YouTube links for focus, breaks and night</small></span>
+          <span class="sp-go" aria-hidden="true">›</span>
+        </button>
+          </div>
+          <div class="sp-group-label">MORE</div>
+          <div class="sp-list">
+            <button class="sp-row" onclick="closeSettings(); switchPage('companion')">
+              <span class="sp-ic"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="2" y="4" width="13" height="10" rx="2"/><rect x="17" y="8" width="5" height="12" rx="1"/></svg></span>
+              <span class="sp-txt"><b>Sync, backup &amp; Gemini AI</b><small>In the Companion tab</small></span>
+              <span class="sp-go" aria-hidden="true">›</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="sp-view" data-view="sources" hidden>
+          <p class="sp-help">One source per line. Lines under <code># ── Showcase</code> appear in the Showcase chip. Start a line with <code>#</code> to switch it off.</p>
+          <textarea id="sourcesText" class="sp-text" spellcheck="false" aria-label="Sources"></textarea>
+          <details class="sp-more"><summary>Line formats</summary>
+            <p><code>youtube &lt;channelId&gt;</code> · <code>reddit &lt;sub&gt;</code> · <code>rss &lt;url&gt;</code> · <code>github &lt;owner/repo&gt;</code> · <code>gnews &lt;topic&gt;</code> · <code>hn front</code>. Add <code>| Name</code> for a label.</p>
+          </details>
+        </div>
+
+        <div class="sp-view" data-view="interests" hidden>
+          <p class="sp-help">Used by both the free local ranking and Smart ranking. Everything above the <code>SCORE 0-2</code> line counts as what you want; below it is noise.</p>
+          <textarea id="profileText" class="sp-text" spellcheck="false" aria-label="Interest profile"></textarea>
+        </div>
+
+        <div class="sp-view" data-view="ranking" hidden>
+          <p class="sp-help">Optional. Without a key the feed is ranked on this device by keywords, free. With an Anthropic key, Claude Haiku ranks it and writes short hooks (about 1-3¢ per refresh). The key stays on this device.</p>
+          <input class="input-field" id="apiKeyInput" type="password" placeholder="sk-ant-…" autocomplete="off" aria-label="Anthropic API key">
+        </div>
+
+        <div class="sp-view" data-view="sounds" hidden>
+          <p class="sp-help">One per line: <code>loop</code>, <code>break</code> or <code>night</code>, then <code>&lt;youtube link&gt; | Label</code>. The examples inside explain each role. The player stays visible because YouTube's policy forbids hiding it.</p>
+          <textarea id="soundsText" class="sp-text" spellcheck="false" aria-label="Focus sounds"></textarea>
+        </div>
+      </div>
+      <div class="sp-foot" id="spFoot" hidden>
+        <button class="btn-primary" onclick="saveSettingsView()">SAVE</button>
+      </div>
     </div>
   </div>
 

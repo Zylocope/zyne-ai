@@ -95,6 +95,15 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, [tabindex]:fo
 .chat-msg.user { align-self: flex-end; background: #e7eedf; color: #315e44; }
 .chat-msg.model { align-self: flex-start; background: var(--bg, #f6f4ee); border: 1px solid var(--border); }
 .chat-msg.pending { color: var(--muted); }
+/* pairing QR (laptop) and the paste fallback (phone) */
+.pair-qr { width: 220px; max-width: 70%; margin: 6px auto 4px; padding: 10px; background: #fff; border: 1px solid var(--border); border-radius: 14px; }
+.pair-qr svg { display: block; width: 100%; height: auto; }
+.pair-qr[hidden] { display: none; }
+.pair-manual { font-size: 13px; color: var(--muted); }
+.pair-manual summary { cursor: pointer; padding: 6px 0; }
+.pair-manual[open] { display: flex; flex-direction: column; gap: 8px; }
+.pair-manual .input-field { margin-top: 4px; }
+
 /* what next? (coach.js) */
 .next-card { margin-bottom: 14px; padding: 14px 16px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
 .next-card .next-eyebrow { font-size: 10px; letter-spacing: 2px; font-weight: 600; color: var(--learn); }

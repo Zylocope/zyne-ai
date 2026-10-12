@@ -223,3 +223,19 @@ console.log('ok — companion chat window')
   assert.match(buildLensContext({ name: 'The Chariot', suit: 'major', keys: 'drive', image: 'a horse' }, 'Now: Monday'), /The Chariot .*\n.*Now: Monday/s)
   console.log('ok — daily lens')
 }
+
+// ── feed: deadlines and the Showcase group
+{
+  const { withTimeout, parseSources, showcaseNames, DEFAULT_SOURCES, SHOWCASE_SOURCES } = await import('./feed.js')
+  const never = new Promise(() => {})
+  const t0 = Date.now()
+  await assert.rejects(withTimeout(never, 50, 'test'), /timed out: test/)
+  assert.ok(Date.now() - t0 < 1000, 'a hanging request is cut off')
+  assert.equal(await withTimeout(Promise.resolve(7), 50), 7)
+  const src = parseSources('# ── News\nrss https://a.example/feed | A\n# ── Showcase (made with AI)\nreddit threejs | Three\n# just a comment\nrss https://b.example | B')
+  assert.deepEqual(src.map(s => s.group), ['', 'showcase', 'showcase'], 'plain comments do not end a group')
+  assert.deepEqual([...showcaseNames(src)], ['Three', 'B'])
+  assert.ok(showcaseNames(parseSources(DEFAULT_SOURCES)).size >= 5, 'defaults ship a Showcase group')
+  assert.ok(showcaseNames(parseSources(SHOWCASE_SOURCES)).size >= 5)
+  console.log('ok — feed deadlines and showcase')
+}

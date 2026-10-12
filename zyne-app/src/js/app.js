@@ -18,7 +18,7 @@ import {
   minutesFromTime, timeFromMinutes, recurrenceLabel,
 } from './schedule.js'
 
-import { DEFAULT_SOURCES, SOURCES_SEED_VERSION, parseSources, fetchAllSources, interleaveBySource } from './feed.js'
+import { DEFAULT_SOURCES, SOURCES_SEED_VERSION, SHOWCASE_SOURCES, parseSources, showcaseNames, fetchAllSources, interleaveBySource, withTimeout } from './feed.js'
 import { loadDay, addEntry, setTaskState, deleteEntry, clipItem } from './journal.js'
 import { DEFAULT_PROFILE, rankItems, scoreLocally } from './ranker.js'
 import {
@@ -94,6 +94,7 @@ async function init() {
   // The timer lives on both platforms; only its host differs.
   await loadFocusSettings()
 
+  try { await getSourcesText() } catch {}       // fills showcaseSet for the chip
   await renderFeedFromDb()
   if (IS_PHONE) {
     moveNavDrop()
@@ -156,14 +157,21 @@ function moveNavDrop(animate = false) {
 // ═════════════════════════════════════════════════════════════
 async function getSourcesText() {
   let text = await getSetting('sources')
-  const seedV = await getSetting('sources_seed_v')
-  if (!text || (seedV || '1') < SOURCES_SEED_VERSION) {
+  const seedV = (await getSetting('sources_seed_v')) || '1'
+  if (text && seedV === '3') {
+    // v4 only adds Showcase; keep whatever the user changed and append it
+    if (!/showcase/i.test(text)) text = `${text.replace(/\s*$/, '')}\n${SHOWCASE_SOURCES}\n`
+    await setSetting('sources', text)
+    await setSetting('sources_seed_v', SOURCES_SEED_VERSION)
+  } else if (!text || seedV < SOURCES_SEED_VERSION) {
     text = DEFAULT_SOURCES
     await setSetting('sources', text)
     await setSetting('sources_seed_v', SOURCES_SEED_VERSION)
   }
+  showcaseSet = showcaseNames(parseSources(text))
   return text
 }
+let showcaseSet = new Set()
 
 const SKELETON = `
   <div class="feed-grid">
@@ -188,7 +196,9 @@ async function refreshFeed(opts = {}) {
     if (errors.length) console.warn('feed errors:', errors)
     await upsertFeedItems(items)
     await renderFeedFromDb()
-    await rankNewItems()          // one cheap Haiku call, if an API key is set
+    btn?.classList.remove('spinning')   // the new items are on screen; ranking is a quiet extra
+    // one cheap Haiku call if a key is set, never allowed to hang
+    await withTimeout(rankNewItems(), 30_000, 'ranking').catch(e => console.warn('rank:', e.message))
     await renderFeedFromDb()      // re-render with scores + hooks
   } catch (e) {
     console.warn('refreshFeed:', e)
@@ -328,6 +338,7 @@ function renderFeed() {
   if (!host) return
   // "All" keeps book ideas out of the news feed — they have their own chip
   const visible = kindFilter === 'all' ? feedItems.filter(i => i.kind !== 'idea')
+    : kindFilter === 'showcase' ? feedItems.filter(i => showcaseSet.has(i.source))
     : kindFilter === 'article' ? feedItems.filter(i => i.kind === 'article' || i.kind === 'repo')
     : feedItems.filter(i => i.kind === kindFilter)
   if (!visible.length) {
@@ -377,26 +388,78 @@ async function clearFeedBatch() {
   await renderFeedFromDb()
 }
 
-async function toggleSettings() {
-  const sheet = document.getElementById('settingsSheet')
-  if (sheet.style.display === 'none') {
-    document.getElementById('apiKeyInput').value = (await getSetting('anthropic_key')) || ''
-    document.getElementById('profileText').value = (await getSetting('interest_profile')) || DEFAULT_PROFILE
-    document.getElementById('sourcesText').value = await getSourcesText()
-    sheet.style.display = 'flex'
-  } else {
-    sheet.style.display = 'none'
+// ─── settings panel ─────────────────────────────────────────
+// Its own full panel: a short list first, then one section at a time,
+// so text boxes only appear inside the section they belong to.
+const SP_TITLES = { home: 'Settings', sources: 'Sources', interests: 'Interests', ranking: 'Smart ranking', sounds: 'Focus sounds' }
+let spView = 'home'
+
+async function openSettings(view = 'home') {
+  const panel = document.getElementById('settingsPanel')
+  if (!panel) return
+  spView = view
+  if (view === 'home') await fillSettingsSummary()
+  if (view === 'sources') document.getElementById('sourcesText').value = await getSourcesText()
+  if (view === 'interests') document.getElementById('profileText').value = (await getSetting('interest_profile')) || DEFAULT_PROFILE
+  if (view === 'ranking') document.getElementById('apiKeyInput').value = (await getSetting('anthropic_key')) || ''
+  if (view === 'sounds') document.getElementById('soundsText').value = soundsText
+  panel.querySelectorAll('.sp-view').forEach(v => { v.hidden = v.dataset.view !== view })
+  document.getElementById('spTitle').textContent = SP_TITLES[view] || 'Settings'
+  document.getElementById('spBack').style.visibility = view === 'home' ? 'hidden' : ''
+  document.getElementById('spFoot').hidden = view === 'home'
+  panel.querySelector('.sp-body').scrollTop = 0
+  if (panel.hidden) {
+    panel.hidden = false
+    requestAnimationFrame(() => panel.classList.add('open'))
   }
 }
 
-async function saveSettings() {
-  await setSetting('anthropic_key', document.getElementById('apiKeyInput').value.trim())
-  await setSetting('interest_profile', document.getElementById('profileText').value)
-  await setSetting('sources', document.getElementById('sourcesText').value)
-  document.getElementById('settingsSheet').style.display = 'none'
-  flashToast('Saved')
-  refreshFeed()
+async function fillSettingsSummary() {
+  const set = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t }
+  try {
+    const n = parseSources(await getSourcesText()).length
+    set('spSourcesSub', `${n} sources, including Showcase`)
+  } catch {}
+  set('spRankingSub', (await getSetting('anthropic_key')) ? 'On: Claude ranks the feed' : 'Off: free local ranking')
+  const sounds = parseSounds(soundsText).length
+  set('spSoundsSub', sounds ? `${sounds} sound${sounds > 1 ? 's' : ''}` : 'None yet: add YouTube links')
 }
+
+function settingsBack() { spView === 'home' ? closeSettings() : openSettings('home') }
+
+function closeSettings() {
+  const panel = document.getElementById('settingsPanel')
+  if (!panel || panel.hidden) return
+  panel.classList.remove('open')
+  setTimeout(() => { if (!panel.classList.contains('open')) panel.hidden = true }, 260)
+}
+
+async function saveSettingsView() {
+  const v = id => document.getElementById(id).value
+  if (spView === 'sources') {
+    await setSetting('sources', v('sourcesText'))
+    showcaseSet = showcaseNames(parseSources(v('sourcesText')))
+    refreshFeed(IS_PHONE ? {} : { booksOnly: true })
+  }
+  if (spView === 'interests') await setSetting('interest_profile', v('profileText'))
+  if (spView === 'ranking') await setSetting('anthropic_key', v('apiKeyInput').trim())
+  if (spView === 'sounds') {
+    soundsText = v('soundsText')
+    await setSetting('focus_sounds', soundsText)
+    renderSoundChips()
+    renderNightCard()
+  }
+  flashToast('Saved')
+  openSettings('home')
+}
+
+// old entry points, kept for the existing buttons
+const toggleSettings = () => openSettings('home')
+const toggleFocusSettings = () => openSettings('sounds')
+
+window.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && !document.getElementById('settingsPanel')?.hidden) settingsBack()
+})
 
 function flashToast(msg) {
   let t = document.getElementById('toast')
@@ -823,22 +886,6 @@ function stopSound() {
   document.getElementById('soundDock').style.display = 'none'
 }
 
-async function toggleFocusSettings() {
-  const sheet = document.getElementById('focusSettings')
-  if (sheet.style.display === 'none') {
-    document.getElementById('soundsText').value = soundsText
-    sheet.style.display = 'flex'
-  } else sheet.style.display = 'none'
-}
-
-async function saveFocusSettings() {
-  soundsText = document.getElementById('soundsText').value
-  await setSetting('focus_sounds', soundsText)
-  document.getElementById('focusSettings').style.display = 'none'
-  renderSoundChips()
-  flashToast('Saved')
-}
-
 async function openExternal(url) {
   try {
     const mod = await import('@tauri-apps/plugin-opener')
@@ -1250,8 +1297,10 @@ async function startPairing() {
   const btn = document.getElementById('pairStartBtn')
   btn.disabled = true
   try {
-    document.getElementById('pairCode').value = await beginHosting()
-    setStatus('syncStatus', 'Waiting for your phone. Keep Zyne open on both.')
+    const code = await beginHosting()
+    document.getElementById('pairCode').value = code
+    await showPairQr(code)
+    setStatus('syncStatus', 'Scan the QR with your phone. Keep Zyne open on both.')
   } catch (e) { setStatus('syncStatus', errText(e)) }
   finally { btn.disabled = false }
 }
@@ -1259,6 +1308,7 @@ async function startPairing() {
 async function stopPairing() {
   try { await endHosting() } catch (e) { console.warn('stop pairing:', e) }
   document.getElementById('pairCode').value = ''
+  showPairQr('')
   setStatus('syncStatus', 'Pairing stopped.')
 }
 
@@ -1270,6 +1320,35 @@ async function copyPairCode() {
 }
 
 // The code stays in the box: it works again until the laptop's pairing ends.
+// Laptop: the pairing code as a QR. Generated on this device, nothing leaves it.
+async function showPairQr(code) {
+  const box = document.getElementById('pairQr')
+  if (!box) return
+  if (!code) { box.hidden = true; box.innerHTML = ''; return }
+  try {
+    const QR = (await import('qrcode')).default
+    box.innerHTML = await QR.toString(code, { type: 'svg', margin: 1, errorCorrectionLevel: 'M', color: { dark: '#20352a', light: '#ffffff' } })
+    box.hidden = false
+  } catch (e) { console.warn('qr:', e); box.hidden = true }
+}
+
+// Phone: scan the laptop's QR with the camera, then sync straight away.
+async function scanPairCode() {
+  if (!native) return setStatus('syncStatus', 'Scanning works in the installed app.')
+  try {
+    const bs = await import('@tauri-apps/plugin-barcode-scanner')
+    let perm = await bs.checkPermissions()
+    if (perm !== 'granted') perm = await bs.requestPermissions()
+    if (perm !== 'granted') return setStatus('syncStatus', 'Camera access is off. Allow it in Android settings, or paste the code instead.')
+    const { content } = await bs.scan({ windowed: false, formats: [bs.Format.QRCode] })
+    if (!content || !content.includes('#')) return setStatus('syncStatus', 'That QR is not a Zyne pairing code.')
+    document.getElementById('joinCode').value = content.trim()
+    await joinPairing()
+  } catch (e) {
+    setStatus('syncStatus', /cancel/i.test(errText(e)) ? '' : errText(e))
+  }
+}
+
 async function joinPairing() {
   const btn = document.getElementById('joinBtn')
   btn.disabled = true
@@ -1579,10 +1658,10 @@ Object.assign(window, {
   switchPage,
   // Feed
   refreshFeed, openFeedItem, clipFeedItem, clearFeedBatch,
-  setKindFilter, toggleSettings, saveSettings,
+  setKindFilter, toggleSettings, openSettings, closeSettings, settingsBack, saveSettingsView,
   // Focus
   beginCompose, startSession, stopSession, skipPhase, setMethod,
-  toggleFocusSettings, saveFocusSettings,
+  toggleFocusSettings,
   playSound, stopSound, openExternal, playNight, toggleNightDone,
   // Daily card
   drawDailyCard, shuffleLine, openDailyCard, keepIfThen,
@@ -1594,7 +1673,7 @@ Object.assign(window, {
   journalToggle, journalMigrate, journalSkip, journalDelete, eventDelete,
   selectCalendarDate, monthStep, jumpToToday,
   // Companion
-  startPairing, stopPairing, copyPairCode, joinPairing, keepVersion,
+  startPairing, stopPairing, copyPairCode, joinPairing, scanPairCode, keepVersion,
   exportBackupFile, importBackupFile,
   sendChat, newChat, importAiKey, setAiEnabled, removeAiKey,
   askWhatNext, startSuggested, startAlso, notNow, setNudges, saveAbout,

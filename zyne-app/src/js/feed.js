@@ -12,7 +12,7 @@
 // Every feed below was verified reachable on 2026-07-27.
 import { extractIdeas, looksLikeBook } from './books.js'
 
-export const SOURCES_SEED_VERSION = '3'
+export const SOURCES_SEED_VERSION = '4'
 export const DEFAULT_SOURCES = `# ── AI & LLM
 youtube UC4ZVkG3RQPzvZk7alIVjcCg | Sandeep Swadia
 youtube UCP235oUhop0rvk7wuJTjx6A | TBH Labs
@@ -76,6 +76,15 @@ rss https://www.aljazeera.com/xml/rss/all.xml | Al Jazeera
 youtube UCBJycsmduvYEL83R_U4JriQ | MKBHD
 youtube UCamLstJyCa-t5gfZegxsFMw | Colin and Samir
 youtube UCoOae5nYA7VqaXzerajD0lg | Ali Abdaal
+# ── Showcase (people showing finished work, a lot of it made with AI)
+# Everything under this header appears under the Showcase chip.
+reddit threejs | Three.js Showcase
+reddit creativecoding | Creative Coding
+reddit generative | Generative Art
+reddit aivideo | AI Video
+reddit SideProject | Side Projects
+reddit vibecoding | Vibe Coding
+rss https://hnrss.org/show?points=50 | Show HN
 # ── Books & learning (these become idea cards, not article cards)
 books https://fourminutebooks.com/feed/ | Four Minute Books
 books https://blas.com/feed/ | Blas Moros
@@ -87,27 +96,58 @@ rss https://calnewport.com/feed/ | Cal Newport
 rss https://ryanholiday.net/feed/ | Ryan Holiday
 reddit suggestmeabook`
 
+// Added to existing source lists by the v4 seed migration (app.js getSourcesText).
+export const SHOWCASE_SOURCES = `# ── Showcase (people showing finished work, a lot of it made with AI)
+# Everything under this header appears under the Showcase chip.
+reddit threejs | Three.js Showcase
+reddit creativecoding | Creative Coding
+reddit generative | Generative Art
+reddit aivideo | AI Video
+reddit SideProject | Side Projects
+reddit vibecoding | Vibe Coding
+rss https://hnrss.org/show?points=50 | Show HN`
+
 // Book-summary sources: these publish the full article in RSS with a
 // consistent structure, which is what makes idea extraction possible.
 export const BOOK_SOURCES = `books https://fourminutebooks.com/feed/ | Four Minute Books
 books https://blas.com/feed/ | Blas Moros`
 
+// A "# ── Name" header starts a group; sources under "Showcase" feed the Showcase chip.
 export function parseSources(text) {
-  return (text || '')
-    .split('\n')
-    .map(l => l.trim())
-    .filter(l => l && !l.startsWith('#'))
-    .map(l => {
-      const [spec, name] = l.split('|').map(s => s.trim())
-      const [type, ...rest] = spec.split(/\s+/)
-      return { type: type.toLowerCase(), value: rest.join(' '), name: name || '' }
-    })
-    .filter(s => s.type && s.value)
+  let group = ''
+  const out = []
+  for (const raw of (text || '').split('\n')) {
+    const l = raw.trim()
+    if (!l) continue
+    if (l.startsWith('#')) {
+      if (/^#\s*──/.test(l)) group = /showcase/i.test(l) ? 'showcase' : ''
+      continue
+    }
+    const [spec, name] = l.split('|').map(s => s.trim())
+    const [type, ...rest] = spec.split(/\s+/)
+    if (type && rest.length) out.push({ type: type.toLowerCase(), value: rest.join(' '), name: name || '', group })
+  }
+  return out
 }
+
+// Display names of the Showcase sources (items carry their source's name).
+export const showcaseNames = sources =>
+  new Set(sources.filter(s => s.group === 'showcase').map(s => s.name || (s.type === 'reddit' ? `r/${s.value}` : s.value)))
 
 // ─── HTTP (Tauri plugin-http, or vite proxy in browser dev) ──
 const IS_TAURI = typeof window !== 'undefined' && !!window.__TAURI_INTERNALS__
 let tauriFetchP = null
+
+export const FETCH_TIMEOUT_MS = 10_000
+
+// Settles no later than `ms`, whatever the wrapped promise does.
+export function withTimeout(promise, ms, what = 'request') {
+  let t
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => { t = setTimeout(() => reject(new Error(`timed out: ${what}`)), ms) }),
+  ]).finally(() => clearTimeout(t))
+}
 
 async function httpGet(url) {
   let f = fetch
@@ -121,10 +161,20 @@ async function httpGet(url) {
     target = `/zx/${u.hostname}${u.pathname}${u.search}`
   }
   // Reddit & co. 403 default library UAs; browsers ignore this header (proxy sets it in dev)
-  const opts = IS_TAURI ? { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) zyne-feed/0.1' } } : undefined
-  const res = await f(target, opts)
+  // A site that never answers must not hold the whole refresh (and its spinner)
+  // open: every request gets a hard deadline.
+  const ctrl = new AbortController()
+  const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS)
+  const opts = { signal: ctrl.signal }
+  if (IS_TAURI) {
+    opts.headers = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) zyne-feed/0.1' }
+    opts.connectTimeout = FETCH_TIMEOUT_MS
+  }
+  let res
+  try { res = await withTimeout(f(target, opts), FETCH_TIMEOUT_MS + 1000, url) }
+  finally { clearTimeout(timer) }
   if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`)
-  return res.text()
+  return withTimeout(res.text(), FETCH_TIMEOUT_MS, url)
 }
 
 // ─── Parse helpers ───────────────────────────────────────────
@@ -298,7 +348,10 @@ const FETCHERS = { youtube: fetchYouTube, reddit: fetchReddit, hn: fetchHN, gith
 // Returns { items, errors }.
 export async function fetchAllSources(sources) {
   const results = await Promise.allSettled(
-    sources.map(s => (FETCHERS[s.type] || (() => Promise.reject(new Error(`unknown type ${s.type}`))))(s.value, s.name))
+    // each source also gets an overall deadline (a source may make several requests)
+    sources.map(s => withTimeout(
+      (FETCHERS[s.type] || (() => Promise.reject(new Error(`unknown type ${s.type}`))))(s.value, s.name),
+      FETCH_TIMEOUT_MS * 2, `${s.type} ${s.value}`))
   )
   const items = []
   const errors = []
