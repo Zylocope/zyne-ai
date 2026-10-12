@@ -95,6 +95,17 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, [tabindex]:fo
 .chat-msg.user { align-self: flex-end; background: #e7eedf; color: #315e44; }
 .chat-msg.model { align-self: flex-start; background: var(--bg, #f6f4ee); border: 1px solid var(--border); }
 .chat-msg.pending { color: var(--muted); }
+/* what next? (coach.js) */
+.next-card { margin-bottom: 14px; padding: 14px 16px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
+.next-card .next-eyebrow { font-size: 10px; letter-spacing: 2px; font-weight: 600; color: var(--learn); }
+.next-card .next-title { font-family: Georgia, serif; font-size: 20px; margin-top: 6px; line-height: 1.3; }
+.next-card .next-why { font-size: 13px; color: var(--muted); margin-top: 4px; line-height: 1.55; }
+.next-card .next-step { font-size: 13px; margin-top: 8px; line-height: 1.55; }
+.next-card .next-step b { font-weight: 600; color: #315e44; }
+.next-card .companion-actions { margin-top: 12px; }
+.next-card .chip-row { margin-top: 8px; padding: 0; flex-wrap: wrap; }
+.next-card.idle { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.next-card.idle .next-why { margin: 0; }
 @media (min-width: 700px) {
   .bottom-nav { justify-content: center; }
   .nav-item { flex: 0 1 180px; flex-direction: row; gap: 10px; }

@@ -29,10 +29,15 @@ and both **off unless you turn them on**:
   the client side refuses any address that is not private, loopback or
   link-local; the listener stops itself after 30 minutes. Nothing leaves the
   local network.
-- **Gemini chat** (`ai_chat`) is opt-in and needs a key you import yourself.
-  The key lives in `gemini-private.json` in app data — `0o600` on unix, never
-  in the JS bundle and never in a sync payload. Chat text does go to Google
-  when enabled, which is the one place Zyne talks to a third party.
+- **Gemini** (`ai_chat`, `ai_suggest`) is opt-in and needs a key you import
+  yourself. The key lives in `gemini-private.json` in app data — `0o600` on
+  unix, never in the JS bundle and never in a sync payload. Model is the one
+  `AI_MODEL` constant in `companion.rs` (gemini-2.5-flash). When enabled,
+  chat text and the "What next?" day summary (today's tasks/events, last 7
+  journal days, reading list, optional "what matters lately" line) go to
+  Google — the one place Zyne talks to a third party. The suggest prompt lives
+  in Rust so the page can't repurpose the key. Nudges are a second switch
+  (`ai_nudges` setting): max 4 a day, never during focus, only while open.
 
 ## Layout
 
@@ -45,6 +50,7 @@ zyne-app/
     books.js              turns book-summary articles into single-idea cards
     ranker.js             local keyword scoring + optional Claude Haiku pass
     focus.js              Pomodoro state machine, sound roles (pure, tested)
+    coach.js              "What next?" day summary, reply parsing, nudge slots (pure, tested)
     tarot.js              78-card deck + lines to sit with (pure, tested)
     library.js            reading list + saved ideas as markdown (pure parts tested)
     journal.js            bullet-journal markdown engine

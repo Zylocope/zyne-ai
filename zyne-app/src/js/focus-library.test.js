@@ -157,3 +157,52 @@ assert.deepEqual(chatWindow([turn('user', burmese), turn('model', 'ok'), turn('u
 assert.equal(chatWindow([turn('user', burmese + burmese)]).length, 1, 'an oversized newest message is still sent, so Rust can explain')
 
 console.log('ok — companion chat window')
+
+// ── coach: day summary, reply parsing, nudge timing
+{
+  const { buildContext, parseSuggestion, dueNudge, focusPattern } = await import('./coach.js')
+  const now = new Date(2026, 9, 12, 14, 5)
+  const ctx = buildContext({
+    now,
+    days: [
+      { iso: '2026-10-12', entries: [
+        { type: 'task', state: 'open', text: 'Write senior project intro' },
+        { type: 'task', state: 'done', text: 'Laundry' },
+        { type: 'note', state: 'note', text: 'Focused 25m on Psychology notes' },
+      ] },
+      { iso: '2026-10-11', entries: [
+        { type: 'note', state: 'note', text: 'Focused 30m on Reading' },
+        { type: 'task', state: 'done', text: 'Skincare' },
+      ] },
+    ],
+    events: [
+      { name: 'Morning class', time_start: '09:00', duration_minutes: 60 },
+      { name: 'Gym', time_start: '16:00', duration_minutes: 45 },
+    ],
+    reading: [{ title: 'Atomic Habits', done: false }, { title: 'Old book', done: true }],
+    about: 'senior project',
+    skipped: ['Reply to emails'],
+  })
+  assert.match(ctx, /Now: Monday 14:05/)
+  assert.match(ctx, /Open tasks today: Write senior project intro/)
+  assert.match(ctx, /Events still ahead today: 16:00 Gym/)
+  assert.ok(!ctx.includes('Morning class'), 'past events are left out')
+  assert.match(ctx, /Atomic Habits/)
+  assert.ok(!ctx.includes('Old book'), 'finished books are left out')
+  assert.match(ctx, /Not now .*Reply to emails/)
+  assert.match(ctx, /finished Skincare/)
+  assert.equal(focusPattern([{ entries: [{ type: 'note', text: 'Focused 10m on a' }] }]), '', 'one session is not a pattern')
+
+  const s = parseSuggestion('```json\n{"next":"Draft the intro","why":"Two hours before gym.","first_step":"Open the doc","minutes":400,"also":["Read Atomic Habits",3,"Rest","x"]}\n```')
+  assert.equal(s.next, 'Draft the intro')
+  assert.equal(s.minutes, 90, 'minutes are clamped')
+  assert.deepEqual(s.also, ['Read Atomic Habits', 'Rest'])
+  assert.equal(parseSuggestion('not json'), null)
+  assert.equal(parseSuggestion('{"next":""}'), null)
+
+  assert.equal(dueNudge(new Date(2026, 9, 12, 9, 35), ''), '2026-10-12|09:30')
+  assert.equal(dueNudge(new Date(2026, 9, 12, 9, 35), '2026-10-12|09:30'), null, 'once per slot')
+  assert.equal(dueNudge(new Date(2026, 9, 12, 10, 0), ''), null, 'not long after a slot')
+  assert.equal(dueNudge(new Date(2026, 9, 12, 20, 31), '2026-10-12|17:00'), '2026-10-12|20:30')
+  console.log("ok — coach context, replies and nudge timing")
+}

@@ -34,6 +34,7 @@ import {
   exportBackup, importBackup, resolveConflict,
 } from './companion-sync.js'
 import { chatWindow } from './companion-model.js'
+import { buildContext, parseSuggestion, dueNudge } from './coach.js'
 
 // ─── STATE ───────────────────────────────────────────────────
 let feedItems = []                             // current unseen batch
@@ -103,7 +104,8 @@ async function init() {
 
   await loadJournal()
   startReminderLoop()
-  renderAiPanel()
+  await renderAiPanel()
+  renderNextCard()
 }
 
 let clockDay = ''
@@ -484,6 +486,7 @@ function startSession(label) {
   // wall-clock based, so a throttled tab cannot drift
   timerHandle = setInterval(tickTimer, 250)
   renderTimer()
+  renderNextCard()
   resumeBackgroundSound()
 }
 
@@ -511,6 +514,8 @@ async function stopSession() {
   timerLeft = phaseMinutes('focus', focusCfg) * 60
   hideBreakReview()
   renderTimer()
+  suggestion = null
+  renderNextCard()
   try {
     await addEntry(toISODate(new Date()), 'note', `Focused ${minutes}m on ${label}`)
     await loadJournal()
@@ -1142,8 +1147,9 @@ function checkUpcomingReminders() {
 
 function startReminderLoop() {
   if (notifyTimer) return
-  notifyTimer = setInterval(checkUpcomingReminders, 30_000)
-  setTimeout(checkUpcomingReminders, 3_000)
+  const tick = () => { checkUpcomingReminders(); checkNudge() }
+  notifyTimer = setInterval(tick, 30_000)
+  setTimeout(tick, 3_000)
 }
 
 // ═════════════════════════════════════════════════════════════
@@ -1268,6 +1274,7 @@ async function renderAiPanel() {
     host.innerHTML = `
       <div class="sheet-label">Off <span class="sheet-sub">— optional. Import a text file holding your own Gemini API key. It stays in this device’s app data and never goes into a sync or a backup.</span></div>
       <div class="companion-actions"><button class="btn-mini" onclick="window.importAiKey()">IMPORT KEY FILE</button></div>`
+    renderNextCard()
     return
   }
   const controls = `
@@ -1278,22 +1285,33 @@ async function renderAiPanel() {
       <button class="btn-mini" onclick="window.removeAiKey()">REMOVE KEY</button>
     </div>`
   if (!aiState.enabled) {
-    host.innerHTML = `<div class="sheet-label">Key imported · chat is off <span class="sheet-sub">— when on, what you type here goes to Google (${esc(aiState.model)}). Nothing else in Zyne does.</span></div>` + controls
+    host.innerHTML = `<div class="sheet-label">Key imported · AI is off <span class="sheet-sub">— when on, chat messages and “What next?” go to Google (${esc(aiState.model)}). “What next?” sends today’s tasks and events, the last week of journal tasks and focus logs, and your reading list. Nothing else in Zyne does.</span></div>` + controls
+    renderNextCard()
     return
   }
+  const nudgesOn = (await getSetting('ai_nudges')) === '1'
+  const about = (await getSetting('ai_about')) || ''
+  const coach = `
+    <div class="sheet-label" style="margin-top:14px">What next? <span class="sheet-sub">— on the Focus card. Uses your journal, events and reading list; nothing to fill in.</span></div>
+    <input class="input-field" id="aiAbout" maxlength="300" placeholder="Optional: what matters to you lately (e.g. senior project, sleep earlier)" value="${esc(about)}" onchange="window.saveAbout()">
+    <div class="companion-actions" style="margin-top:8px">
+      <button class="btn-mini" onclick="window.setNudges(${!nudgesOn})">${nudgesOn ? 'NUDGES ON · TURN OFF' : 'TURN ON NUDGES'}</button>
+      <span class="sheet-sub">${nudgesOn ? 'A notification with one next step around 9:30, 13:30, 17:00 and 20:30, while Zyne is open. Never during focus.' : 'Off — no AI notifications.'}</span>
+    </div>`
   host.innerHTML = `
-    <div class="sheet-label">On · ${esc(aiState.model)} <span class="sheet-sub">— messages go to Google. The chat isn’t saved; it’s gone when Zyne closes.</span></div>
+    <div class="sheet-label">On · ${esc(aiState.model)} <span class="sheet-sub">— chat and “What next?” go to Google. The chat isn’t saved; it’s gone when Zyne closes.</span></div>
     <div class="chat-log" id="chatLog" aria-live="polite"></div>
     <div class="task-input-row" style="border-top:none;padding-top:0">
       <input class="input-field" id="chatInput" placeholder="Ask something…" style="flex:1" autocomplete="off">
       <button class="task-add-btn" onclick="window.sendChat()" aria-label="Send">
         <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
       </button>
-    </div>` + controls
+    </div>` + coach + controls
   document.getElementById('chatInput').addEventListener('keydown', e => {
     if (e.key === 'Enter') { e.preventDefault(); sendChat() }
   })
   renderChatLog()
+  renderNextCard()
 }
 
 function renderChatLog() {
@@ -1345,7 +1363,118 @@ async function importAiKey() {
 }
 
 const setAiEnabled = on => configureAi(null, on)
-async function removeAiKey() { chatHistory = []; await configureAi('', false) }
+async function removeAiKey() { chatHistory = []; suggestion = null; await configureAi('', false) }
+
+// ─── what next? + nudges (coach.js) ─────────────────────────
+// One suggestion at a time, built from what Zyne already knows: today's
+// tasks and events, the last week of journal days, focus logs and the
+// reading list. Sent to Google only while AI is on. Nudges are a separate
+// switch and fire at most four times a day, never during a focus session.
+let suggestion = null
+let suggestBusy = false
+let suggestErr = ''
+let skipped = { day: '', items: [] }
+
+const aiOn = () => native && aiState?.configured && aiState?.enabled
+
+async function gatherContext() {
+  const now = new Date()
+  const days = []
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(now); d.setDate(d.getDate() - i)
+    const iso = toISODate(d)
+    try { days.push({ iso, entries: await loadDay(iso) }) } catch { days.push({ iso, entries: [] }) }
+  }
+  let reading = []
+  try { reading = await listWant() } catch {}
+  const today = toISODate(now)
+  if (skipped.day !== today) skipped = { day: today, items: [] }
+  return buildContext({
+    now, days, reading,
+    events: itemsForDate(calendarItems, now),
+    about: (await getSetting('ai_about')) || '',
+    skipped: skipped.items,
+  })
+}
+
+async function askWhatNext({ quiet = false } = {}) {
+  if (!aiOn() || suggestBusy) return null
+  suggestBusy = true; suggestErr = ''
+  if (!quiet) renderNextCard()
+  try {
+    const parsed = parseSuggestion(await invoke('ai_suggest', { context: await gatherContext() }))
+    if (!parsed) throw new Error('Gemini answered in an odd way. Try again.')
+    suggestion = parsed
+  } catch (e) {
+    suggestErr = errText(e)
+  } finally {
+    suggestBusy = false
+    renderNextCard()
+  }
+  return suggestion
+}
+
+function renderNextCard() {
+  const host = document.getElementById('nextCard')
+  if (!host) return
+  if (!aiOn() || timerRunning) { host.style.display = 'none'; return }
+  host.style.display = ''
+  if (!suggestion || suggestBusy) {
+    host.className = 'next-card idle'
+    host.innerHTML = `
+      <div class="next-why">${suggestBusy ? 'Thinking about your day…' : esc(suggestErr || 'Not sure where to start?')}</div>
+      <button class="btn-mini" onclick="window.askWhatNext()" ${suggestBusy ? 'disabled' : ''}>WHAT NEXT?</button>`
+    return
+  }
+  const s = suggestion
+  host.className = 'next-card'
+  host.innerHTML = `
+    <div class="next-eyebrow">NEXT</div>
+    <div class="next-title">${esc(s.next)}</div>
+    ${s.why ? `<div class="next-why">${esc(s.why)}</div>` : ''}
+    ${s.firstStep ? `<div class="next-step"><b>Start with:</b> ${esc(s.firstStep)}</div>` : ''}
+    <div class="companion-actions">
+      <button class="btn-mini" onclick="window.startSuggested()">START · ${s.minutes} MIN</button>
+      <button class="btn-mini" onclick="window.notNow()">NOT NOW</button>
+    </div>
+    ${s.also.length ? `<div class="chip-row">${s.also.map((a, i) =>
+      `<button class="chip" onclick="window.startAlso(${i})" title="Start this instead">${esc(a)}</button>`).join('')}</div>` : ''}`
+}
+
+function startSuggested() {
+  if (!suggestion) return
+  startSession(suggestion.next)
+}
+function startAlso(i) {
+  const a = suggestion?.also[i]
+  if (a) startSession(a)
+}
+async function notNow() {
+  if (suggestion) skipped.items.push(suggestion.next)
+  suggestion = null
+  await askWhatNext()
+}
+
+async function checkNudge() {
+  if (!aiOn() || timerRunning || suggestBusy) return
+  if ((await getSetting('ai_nudges')) !== '1') return
+  const key = dueNudge(new Date(), await getSetting('ai_nudge_last'))
+  if (!key) return
+  await setSetting('ai_nudge_last', key)      // mark first: one try per slot, even if it fails
+  const s = await askWhatNext({ quiet: true })
+  if (s) sendNotification(`Next: ${s.next}`, s.firstStep ? `Start with: ${s.firstStep}` : s.why)
+}
+
+async function setNudges(on) {
+  await setSetting('ai_nudges', on ? '1' : '0')
+  if (on) sendNotification('Zyne nudges are on', 'Around 9:30, 13:30, 17:00 and 20:30, while Zyne is open.')
+  renderAiPanel()
+}
+async function saveAbout() {
+  const v = (document.getElementById('aiAbout')?.value || '').trim().slice(0, 300)
+  await setSetting('ai_about', v)
+  setStatus('aiStatus', v ? 'Saved. Suggestions will keep this in mind.' : 'Cleared.')
+}
 
 // ═════════════════════════════════════════════════════════════
 //  INPUT BINDINGS
@@ -1390,4 +1519,5 @@ Object.assign(window, {
   startPairing, stopPairing, copyPairCode, joinPairing, keepVersion,
   exportBackupFile, importBackupFile,
   sendChat, newChat, importAiKey, setAiEnabled, removeAiKey,
+  askWhatNext, startSuggested, startAlso, notNow, setNudges, saveAbout,
 })
