@@ -27,6 +27,7 @@ import {
 } from './focus.js'
 import { listWant, addWant, toggleWant, removeWant, saveIdea, buildNudges } from './library.js'
 import { CARDS, drawIndex, randomLine } from './tarot.js'
+import { openCardStage, closeCardStage } from './card3d.js'
 import { invoke } from '@tauri-apps/api/core'
 import { native, initStore, snapshot, chooseFile, saveFile } from './companion-store.js'
 import {
@@ -116,7 +117,7 @@ function updateClock() {
   if (el) el.textContent = s
   // left open past midnight: yesterday's card must go face-down again
   const iso = toISODate(now)
-  if (clockDay && clockDay !== iso) renderDailyCard()
+  if (clockDay && clockDay !== iso) { closeCardStage(); renderDailyCard() }
   clockDay = iso
 }
 
@@ -604,9 +605,8 @@ function renderSoundChips() {
 }
 
 // ─── daily card ──────────────────────────────────────────────
-// One card a day, shaped like a card rather than another journal row.
-// It starts face down — the draw is the point — flips once when you
-// draw it, and stays until tomorrow. A line to sit with rides alongside.
+// One card a day. It starts face down — the draw is the point — and
+// stays until tomorrow. A line to sit with rides alongside.
 let todayLine = randomLine()
 
 // Drawn marks, not geometry: branch · vessel · feather · seed · moon.
@@ -622,53 +622,67 @@ const suitSvg = (suit, size) =>
   `<svg width="${size}" height="${size}" viewBox="0 0 40 40" fill="none" stroke="currentColor"
      stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${SUIT_MARK[suit] || SUIT_MARK.major}</svg>`
 
-// `animate` is only true for a fresh draw: the flip class is added a frame
-// later so the transition has a previous state to run from. On load the
-// class ships in the markup, so a drawn card is simply already face up.
-async function renderDailyCard(animate = false) {
+// Phone only. The laptop is for working, so the card stays off it.
+// In the Journal it is one compact row; tapping it opens the 3D stage
+// (card3d.js), where you pick, flip and tilt the card.
+const cardFace = card => `
+  <span class="tmark">${suitSvg(card.suit, 40)}</span>
+  <div class="tname">${esc(card.name)}</div>
+  <div class="timg">${esc(card.image)}</div>
+  <div class="tkeys">${esc(card.keys)}</div>`
+const cardBack = () => `<span class="tmark">${suitSvg('back', 34)}</span>`
+const lineHTML = () =>
+  `${esc(todayLine.text)}${todayLine.who ? ` <span class="daily-who">${esc(todayLine.who)}</span>` : ''}`
+
+async function todaysCard() {
+  const [day, idx] = ((await getSetting('tarot_drawn')) || '').split('|')
+  return day === toISODate(new Date()) ? CARDS[Number(idx)] || null : null
+}
+
+async function renderDailyCard() {
   const host = document.getElementById('dailyCard')
   if (!host) return
-  const today = toISODate(new Date())
-  const [day, idx] = ((await getSetting('tarot_drawn')) || '').split('|')
-  const card = day === today ? CARDS[Number(idx)] : null
-  const faceUp = card && !animate ? ' flipped' : ''
-
-  host.innerHTML = `<div class="j-section-label">TODAY</div>
-    <div class="daily-wrap">
-      <div class="daily-flip${faceUp}" id="dailyFlip">
-        <button class="tcard tback" onclick="window.drawDailyCard()" ${card ? 'tabindex="-1" aria-hidden="true"' : ''}
-                aria-label="Draw today's card">
-          <span class="tmark">${suitSvg('back', 34)}</span>
-        </button>
-        <div class="tcard tfront ${card ? esc(card.suit) : ''}">${card ? `
-          <span class="tmark">${suitSvg(card.suit, 40)}</span>
-          <div class="tname">${esc(card.name)}</div>
-          <div class="timg">${esc(card.image)}</div>
-          <div class="tkeys">${esc(card.keys)}</div>` : ''}
-        </div>
-      </div>
-      <div class="daily-aside">
-        ${card ? '' : '<div class="daily-hint">Tap to draw<br>today\'s card</div>'}
-        <button class="daily-line" onclick="window.shuffleLine()" aria-label="Another line">
-          ${esc(todayLine.text)}${todayLine.who ? ` <span class="daily-who">${esc(todayLine.who)}</span>` : ''}
-        </button>
-      </div>
+  if (!IS_PHONE) { host.style.display = 'none'; host.innerHTML = ''; return }
+  host.style.display = ''
+  const card = await todaysCard()
+  host.innerHTML = `
+    <div class="daily-mini">
+      <button class="mini-card ${card ? 'up ' + esc(card.suit) : ''}" onclick="window.openDailyCard()"
+              aria-label="${card ? `Open today's card, ${esc(card.name)}` : "Draw today's card"}">
+        ${suitSvg(card ? card.suit : 'back', 22)}
+      </button>
+      <button class="mini-text" onclick="window.openDailyCard()">
+        <span class="mini-eyebrow">TODAY’S CARD</span>
+        <span class="mini-name">${card ? esc(card.name) : 'Tap to draw'}</span>
+      </button>
+      <button class="daily-line mini-line" onclick="window.shuffleLine()" aria-label="Another line">${lineHTML()}</button>
     </div>`
+}
 
-  if (animate) requestAnimationFrame(() => document.getElementById('dailyFlip')?.classList.add('flipped'))
+async function openDailyCard() {
+  openCardStage({
+    card: await todaysCard(),
+    front: cardFace,
+    back: cardBack(),
+    line: lineHTML(),
+    onDraw: drawDailyCard,
+  })
 }
 
 // Drawing writes the card into today's journal, the way a finished
 // session does — so the draws are a record, not a moment that vanishes.
 async function drawDailyCard() {
   const today = toISODate(new Date())
+  const existing = await todaysCard()
+  if (existing) return existing                 // one draw a day
   const i = drawIndex()
   await setSetting('tarot_drawn', `${today}|${i}`)
-  await renderDailyCard(true)
+  renderDailyCard()
   try {
     await addEntry(today, 'note', `Card: ${CARDS[i].name} — ${CARDS[i].keys}`)
     await loadJournal()
   } catch (e) { console.warn('log card:', e) }
+  return CARDS[i]
 }
 
 function shuffleLine() { todayLine = randomLine(); renderDailyCard() }
@@ -1507,7 +1521,7 @@ Object.assign(window, {
   toggleFocusSettings, saveFocusSettings,
   playSound, stopSound, openExternal, playNight, toggleNightDone,
   // Daily card
-  drawDailyCard, shuffleLine,
+  drawDailyCard, shuffleLine, openDailyCard,
   // Library
   setLibraryView, saveIdeaCard, wantBook, wantToggle, wantRemove,
   __reloadLibrary: loadLibrary,   // used by the browser-dev self-check

@@ -297,3 +297,112 @@
 @media (prefers-reduced-motion: reduce) {
   .daily-flip > .tcard { transition: none; }
 }
+
+/* ─── daily card: phone row ───────────────────────────────── */
+.daily-mini {
+  display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto;
+  column-gap: 12px; row-gap: 4px; align-items: center;
+  padding: 10px 12px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface);
+}
+.mini-card {
+  grid-row: 1 / 3; width: 40px; height: 60px; border-radius: 6px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--well); border: 1px solid var(--border2); color: var(--border2);
+  box-shadow: 0 3px 8px #293d3214; transform: rotate(-4deg); transition: transform .2s;
+}
+.mini-card:active { transform: rotate(0) scale(.95); }
+.mini-card.up { background: var(--surface); transform: rotate(0); }
+.mini-card.up.major { color: var(--hand); } .mini-card.up.wands { color: var(--proj); }
+.mini-card.up.cups { color: var(--learn); } .mini-card.up.swords { color: var(--skeptic); }
+.mini-card.up.pentacles { color: var(--pers); }
+.mini-text { background: none; border: 0; padding: 0; text-align: left; cursor: pointer; display: flex; flex-direction: column; gap: 2px; font: inherit; color: var(--text); }
+.mini-eyebrow { font-size: 9.5px; letter-spacing: .12em; color: var(--muted); }
+.mini-name { font-family: "Instrument Serif", Georgia, serif; font-size: 18px; line-height: 1.15; }
+.mini-line { grid-column: 2; font-size: 13px !important; line-height: 1.4 !important; }
+
+/* ─── daily card: 3D stage (card3d.js) ────────────────────── */
+html.c3-open, html.c3-open body { overflow: hidden; }
+.c3-stage {
+  position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; align-items: center;
+  padding: max(env(safe-area-inset-top), 30px) 20px max(env(safe-area-inset-bottom), 20px);
+  background: radial-gradient(120% 80% at 50% 30%, #2e4537 0%, #17221b 70%);
+  color: #f3efe2; opacity: 0; transition: opacity .25s; touch-action: none; overflow-y: auto;
+}
+.c3-stage.in { opacity: 1; }
+.c3-close {
+  position: absolute; top: max(env(safe-area-inset-top), 24px); right: 16px; width: 40px; height: 40px;
+  border-radius: 50%; border: 1px solid #ffffff30; background: #ffffff12; color: #f3efe2; font-size: 22px; cursor: pointer;
+}
+.c3-eyebrow { margin-top: 18px; font-size: 10px; letter-spacing: .22em; color: #cfe0c8b0; }
+.c3-table {
+  position: relative; width: min(62vw, 280px); aspect-ratio: 2 / 3; margin: 28px auto 0;
+  perspective: 1100px; flex-shrink: 0;
+}
+.c3-card { position: absolute; inset: 0; cursor: grab; touch-action: none; --sx: 50%; --sy: 30%; --drop: 0px; }
+.c3-card:active { cursor: grabbing; }
+.c3-card::after { /* soft floor shadow that slides as the card turns */
+  content: ""; position: absolute; left: 12%; right: 12%; bottom: -26px; height: 18px; border-radius: 50%;
+  background: #000; filter: blur(12px); opacity: .45; transform: translateX(var(--drop)); z-index: -1;
+}
+.c3-body { position: absolute; inset: 0; transform-style: preserve-3d; will-change: transform; }
+.c3-face {
+  position: absolute; inset: 0; border-radius: 14px; overflow: hidden;
+  backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  display: flex; flex-direction: column; align-items: center; text-align: center; padding: 14px;
+  background: #fffdf6; color: var(--text); border: 1px solid #d8d2bf;
+}
+.c3-face::before { content: ""; position: absolute; inset: 7px; border: 1px solid #e3ddc9; border-radius: 9px; pointer-events: none; }
+.c3-back { transform: translateZ(1.6px); justify-content: center; background: #22352a; border-color: #3b5444; color: #c9b779; }
+.c3-back::before { border-color: #c9b77955; }
+.c3-back::after {
+  content: ""; position: absolute; inset: 7px; border-radius: 9px; opacity: .35;
+  background-image: radial-gradient(circle, #c9b779 1px, transparent 1.3px); background-size: 14px 14px;
+}
+.c3-back .tmark { position: relative; z-index: 1; transform: scale(2); }
+.c3-front { transform: rotateY(180deg) translateZ(1.6px); }
+.c3-front .tmark { flex: 1; height: auto; margin: 8px 0 0; }
+.c3-front .tmark svg { width: clamp(80px, 26vw, 120px); height: clamp(80px, 26vw, 120px); stroke-width: 1; }
+.c3-front .tname { font-size: clamp(22px, 7vw, 30px); margin-top: 0; }
+.c3-front .timg { font-size: clamp(12px, 3.4vw, 15px); margin: 8px 0 12px; }
+.c3-front .tkeys { font-size: 9px; margin-top: 0; }
+.c3-card[data-suit="major"] .c3-front { color: var(--hand); }
+.c3-card[data-suit="wands"] .c3-front { color: var(--proj); }
+.c3-card[data-suit="cups"] .c3-front { color: var(--learn); }
+.c3-card[data-suit="swords"] .c3-front { color: var(--skeptic); }
+.c3-card[data-suit="pentacles"] .c3-front { color: var(--pers); }
+.c3-front .tname { color: var(--text); } .c3-front .timg, .c3-front .tkeys { color: var(--muted); }
+.c3-edge { position: absolute; inset: 0; border-radius: 14px; background: #cfc6aa; transform: translateZ(var(--z)); }
+/* light sliding over the surface; the major arcana get a foil shimmer */
+.c3-sheen {
+  position: absolute; inset: 0; pointer-events: none; mix-blend-mode: soft-light;
+  background: radial-gradient(circle at var(--sx) var(--sy), #ffffffd0 0%, #ffffff00 55%);
+}
+.c3-card[data-suit="major"] .c3-front .c3-sheen {
+  mix-blend-mode: color-dodge; opacity: .5;
+  background:
+    radial-gradient(circle at var(--sx) var(--sy), #ffffffb0 0%, #ffffff00 45%),
+    linear-gradient(115deg, #ff9ad500 20%, #ffd27a66 35%, #8ef0d566 50%, #9fb4ff66 65%, #ff9ad500 80%);
+  background-size: 100% 100%, 260% 260%;
+  background-position: 0 0, var(--sx) var(--sy);
+}
+
+/* fan of three before the draw */
+.c3-fan { transition: transform .5s cubic-bezier(.2,.8,.25,1.1), opacity .35s; }
+.c3-fan .c3-body { transform: none; }
+.c3-table .c3-fan { transform: translateY(20px) scale(.9); }
+.c3-table.spread .c3-fan {
+  transform: translateX(calc(var(--i) * 24%)) translateY(calc(var(--i) * var(--i) * 14px))
+             rotateZ(calc(var(--i) * 8deg)) scale(.8);
+}
+.c3-table.spread .c3-fan:active { transform: translateX(calc(var(--i) * 24%)) rotateZ(calc(var(--i) * 8deg)) scale(.77); }
+.c3-table.chosen .c3-fan { opacity: 0; transform: translateY(60px) scale(.8); }
+.c3-table.chosen .c3-fan.picked { opacity: 1; transform: translateY(-6px) scale(1); z-index: 2; }
+
+.c3-read { margin-top: 40px; max-width: 340px; text-align: center; opacity: 0; transform: translateY(10px); transition: opacity .5s .35s, transform .5s .35s; }
+.c3-read.in { opacity: 1; transform: none; }
+.c3-line { font-family: "Instrument Serif", Georgia, serif; font-style: italic; font-size: 17px; line-height: 1.5; opacity: .85; }
+.c3-saved { font-size: 10px; letter-spacing: .14em; opacity: .45; margin-top: 12px; }
+.c3-hint { margin-top: auto; padding-top: 22px; font-size: 11px; opacity: .5; text-align: center; }
+@media (prefers-reduced-motion: reduce) {
+  .c3-fan, .c3-read, .c3-stage { transition: none; }
+}

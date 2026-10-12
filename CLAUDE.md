@@ -32,7 +32,7 @@ and both **off unless you turn them on**:
 - **Gemini** (`ai_chat`, `ai_suggest`) is opt-in and needs a key you import
   yourself. The key lives in `gemini-private.json` in app data — `0o600` on
   unix, never in the JS bundle and never in a sync payload. Model is the one
-  `AI_MODEL` constant in `companion.rs` (gemini-2.5-flash). When enabled,
+  `AI_MODEL` constant in `companion.rs` (gemini-3.5-flash-lite). When enabled,
   chat text and the "What next?" day summary (today's tasks/events, last 7
   journal days, reading list, optional "what matters lately" line) go to
   Google — the one place Zyne talks to a third party. The suggest prompt lives
@@ -51,6 +51,7 @@ zyne-app/
     ranker.js             local keyword scoring + optional Claude Haiku pass
     focus.js              Pomodoro state machine, sound roles (pure, tested)
     coach.js              "What next?" day summary, reply parsing, nudge slots (pure, tested)
+    card3d.js             full-screen 3D daily card stage (phone)
     tarot.js              78-card deck + lines to sit with (pure, tested)
     library.js            reading list + saved ideas as markdown (pure parts tested)
     journal.js            bullet-journal markdown engine
@@ -132,6 +133,10 @@ four-word naming convention — but every image line and keyword set in
 published deck or its guidebook. One draw a day, stored as
 `tarot_drawn = <iso>|<index>`; it writes the card into that day's journal and
 goes face-down again at midnight (hooked to the existing clock tick).
+**Phone only** (user asked to remove it from the laptop): a compact row in
+Journal opens `card3d.js`, a full-screen CSS-3D stage — pick one of three,
+flip, drag/gyro tilt, swipe to turn over. CSS 3D, not WebGL, on purpose:
+crisp text and cheap on Android WebView.
 
 ## Sound roles
 
