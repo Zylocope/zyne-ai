@@ -206,3 +206,20 @@ console.log('ok — companion chat window')
   assert.equal(dueNudge(new Date(2026, 9, 12, 20, 31), '2026-10-12|17:00'), '2026-10-12|20:30')
   console.log("ok — coach context, replies and nudge timing")
 }
+
+// ── daily lens: every suit has all four parts; AI replies are checked
+{
+  const { LOCAL_LENS, localLens, parseLens, buildLensContext } = await import('./coach.js')
+  for (const suit of ['major', 'wands', 'cups', 'swords', 'pentacles']) {
+    const l = LOCAL_LENS[suit]
+    assert.ok(l.mind && l.heart && l.people, `lens missing parts: ${suit}`)
+    assert.match(l.ifThen, /^If .+, then I /, `if-then shape: ${suit}`)
+  }
+  assert.equal(localLens({ suit: 'nope' }).mind, LOCAL_LENS.major.mind)
+  const ok = parseLens('{"mind":"a","heart":"b","people":"c","if_then":"If x, then I y."}')
+  assert.equal(ok.ifThen, 'If x, then I y.'); assert.equal(ok.source, 'ai')
+  assert.equal(parseLens('{"mind":"a","heart":"b"}'), null, 'incomplete lens is rejected')
+  assert.equal(parseLens('oops'), null)
+  assert.match(buildLensContext({ name: 'The Chariot', suit: 'major', keys: 'drive', image: 'a horse' }, 'Now: Monday'), /The Chariot .*\n.*Now: Monday/s)
+  console.log('ok — daily lens')
+}

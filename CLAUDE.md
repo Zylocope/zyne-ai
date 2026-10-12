@@ -32,7 +32,7 @@ and both **off unless you turn them on**:
 - **Gemini** (`ai_chat`, `ai_suggest`) is opt-in and needs a key you import
   yourself. The key lives in `gemini-private.json` in app data — `0o600` on
   unix, never in the JS bundle and never in a sync payload. Model is the one
-  `AI_MODEL` constant in `companion.rs` (gemini-3.5-flash-lite). When enabled,
+  `AI_MODEL` constant in `companion.rs` (gemini-2.5-flash). When enabled,
   chat text and the "What next?" day summary (today's tasks/events, last 7
   journal days, reading list, optional "what matters lately" line) go to
   Google — the one place Zyne talks to a third party. The suggest prompt lives
@@ -137,6 +137,10 @@ goes face-down again at midnight (hooked to the existing clock tick).
 Journal opens `card3d.js`, a full-screen CSS-3D stage — pick one of three,
 flip, drag/gyro tilt, swipe to turn over. CSS 3D, not WebGL, on purpose:
 crisp text and cheap on Android WebView.
+Under the card sits **Today's lens** (`ai_lens`, coach.js): Mind (thinking),
+Heart (feelings), People (social) and one if–then plan the user can add to
+the journal. The card is a theme, never a prediction. Without AI it uses
+`LOCAL_LENS` per suit; AI results are cached per day as `tarot_lens`.
 
 ## Sound roles
 

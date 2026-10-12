@@ -35,7 +35,7 @@ import {
   exportBackup, importBackup, resolveConflict,
 } from './companion-sync.js'
 import { chatWindow } from './companion-model.js'
-import { buildContext, parseSuggestion, dueNudge } from './coach.js'
+import { buildContext, parseSuggestion, dueNudge, buildLensContext, parseLens, localLens } from './coach.js'
 
 // ─── STATE ───────────────────────────────────────────────────
 let feedItems = []                             // current unseen batch
@@ -666,7 +666,52 @@ async function openDailyCard() {
     back: cardBack(),
     line: lineHTML(),
     onDraw: drawDailyCard,
+    extra: async card => lensHTML(await dailyLens(card)),
   })
+}
+
+// ─── daily lens: Mind · Heart · People + one if–then plan ───
+// Gemini reads the card's theme against your real day when AI is on;
+// otherwise the built-in principle for the suit. Cached for the day.
+let todaysLens = null
+async function dailyLens(card) {
+  const today = toISODate(new Date())
+  const [day, json] = splitOnce((await getSetting('tarot_lens')) || '', '|')
+  if (day === today) { try { return (todaysLens = JSON.parse(json)) } catch {} }
+  let lens = null
+  if (aiOn()) {
+    try { lens = parseLens(await invoke('ai_lens', { context: buildLensContext(card, await gatherContext()) })) }
+    catch (e) { console.warn('lens:', errText(e)) }
+  }
+  lens = lens || localLens(card)
+  todaysLens = lens
+  if (lens.source === 'ai') await setSetting('tarot_lens', `${today}|${JSON.stringify(lens)}`)
+  return lens
+}
+const splitOnce = (s, sep) => { const i = s.indexOf(sep); return i < 0 ? [s, ''] : [s.slice(0, i), s.slice(i + 1)] }
+
+function lensHTML(l) {
+  const row = (k, label, text) => `<div class="lens-row"><span class="lens-k ${k}">${label}</span><span>${esc(text)}</span></div>`
+  return `
+    <div class="lens">
+      <div class="lens-head">TODAY’S LENS</div>
+      ${row('mind', 'MIND', l.mind)}
+      ${row('heart', 'HEART', l.heart)}
+      ${row('people', 'PEOPLE', l.people)}
+      <div class="lens-plan">
+        <div class="lens-k plan">IF–THEN</div>
+        <div class="lens-plan-text">${esc(l.ifThen)}</div>
+        <button class="lens-keep" onclick="window.keepIfThen(this)">ADD TO TODAY</button>
+      </div>
+      ${l.source === 'local' ? '<div class="lens-src">Built-in. Turn on AI in Companion for one shaped around your day.</div>' : ''}
+    </div>`
+}
+
+async function keepIfThen(btn) {
+  if (!todaysLens?.ifThen) return
+  await addEntry(toISODate(new Date()), 'task', todaysLens.ifThen)
+  await loadJournal()
+  if (btn) { btn.textContent = 'ADDED ✓'; btn.disabled = true }
 }
 
 // Drawing writes the card into today's journal, the way a finished
@@ -1521,7 +1566,7 @@ Object.assign(window, {
   toggleFocusSettings, saveFocusSettings,
   playSound, stopSound, openExternal, playNight, toggleNightDone,
   // Daily card
-  drawDailyCard, shuffleLine, openDailyCard,
+  drawDailyCard, shuffleLine, openDailyCard, keepIfThen,
   // Library
   setLibraryView, saveIdeaCard, wantBook, wantToggle, wantRemove,
   __reloadLibrary: loadLibrary,   // used by the browser-dev self-check

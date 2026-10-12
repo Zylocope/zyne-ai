@@ -38,6 +38,7 @@ export function openCardStage(opts) {
     const c = makeCard(opts.back, opts.front(opts.card), opts.card.suit)
     table.appendChild(c.el)
     showReading(opts.card, opts.line)
+    showExtra(opts, opts.card)
     mountMotion(c, 180)
     return
   }
@@ -65,6 +66,7 @@ export function openCardStage(opts) {
     stage.querySelector('.c3-hint').textContent = 'Drag or tilt your phone · swipe to turn it over'
     mountMotion(c, 0, 180)          // starts face down, spins up
     showReading(card, opts.line)
+    showExtra(opts, card)
   }, { once: false }))
 }
 
@@ -77,6 +79,21 @@ export function closeCardStage() {
   document.documentElement.classList.remove('c3-open')
   s.classList.remove('in')
   setTimeout(() => s.remove(), REDUCED ? 0 : 260)
+}
+
+// Anything the app wants under the card (the daily lens). Loads after.
+async function showExtra(opts, card) {
+  if (!opts.extra || !stage) return
+  const box = document.createElement('div')
+  box.className = 'c3-extra'
+  box.innerHTML = '<div class="c3-wait">Reading your day…</div>'
+  stage.querySelector('.c3-read')?.after(box)
+  const mine = stage
+  let html = ''
+  try { html = await opts.extra(card) } catch { html = '' }
+  if (stage !== mine) return                    // closed meanwhile
+  box.innerHTML = html
+  if (!html) box.remove()
 }
 
 function showReading(_card, line) {

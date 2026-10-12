@@ -326,7 +326,7 @@ html.c3-open, html.c3-open body { overflow: hidden; }
   position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; align-items: center;
   padding: max(env(safe-area-inset-top), 30px) 20px max(env(safe-area-inset-bottom), 20px);
   background: radial-gradient(120% 80% at 50% 30%, #2e4537 0%, #17221b 70%);
-  color: #f3efe2; opacity: 0; transition: opacity .25s; touch-action: none; overflow-y: auto;
+  color: #f3efe2; opacity: 0; transition: opacity .25s; touch-action: pan-y; overflow-y: auto; overscroll-behavior: contain;
 }
 .c3-stage.in { opacity: 1; }
 .c3-close {
@@ -402,6 +402,23 @@ html.c3-open, html.c3-open body { overflow: hidden; }
 .c3-read.in { opacity: 1; transform: none; }
 .c3-line { font-family: "Instrument Serif", Georgia, serif; font-style: italic; font-size: 17px; line-height: 1.5; opacity: .85; }
 .c3-saved { font-size: 10px; letter-spacing: .14em; opacity: .45; margin-top: 12px; }
+.c3-extra { width: 100%; max-width: 360px; margin-top: 22px; }
+.c3-wait { text-align: center; font-size: 12px; opacity: .5; }
+.lens { text-align: left; border-top: 1px solid #ffffff20; padding-top: 16px; animation: lensIn .5s both; }
+@keyframes lensIn { from { opacity: 0; transform: translateY(8px); } }
+.lens-head { font-size: 10px; letter-spacing: .2em; opacity: .55; margin-bottom: 12px; text-align: center; }
+.lens-row { display: grid; grid-template-columns: 62px 1fr; gap: 10px; font-size: 14px; line-height: 1.5; margin-bottom: 12px; }
+.lens-k { font-size: 9.5px; letter-spacing: .14em; font-weight: 600; padding-top: 4px; }
+.lens-k.mind { color: #9fb7e0; } .lens-k.heart { color: #e6a6a0; }
+.lens-k.people { color: #e3c97e; } .lens-k.plan { color: #a6d6b4; }
+.lens-plan { margin-top: 6px; padding: 12px 14px; border-radius: 12px; background: #ffffff10; border: 1px solid #ffffff1c; }
+.lens-plan-text { font-family: "Instrument Serif", Georgia, serif; font-size: 18px; line-height: 1.4; margin-top: 6px; }
+.lens-keep {
+  margin-top: 10px; padding: 8px 14px; border-radius: 999px; border: 1px solid #a6d6b480;
+  background: none; color: #cfe8d6; font-size: 10.5px; letter-spacing: .12em; cursor: pointer;
+}
+.lens-keep:disabled { opacity: .6; }
+.lens-src { font-size: 11px; opacity: .45; margin-top: 10px; text-align: center; }
 .c3-hint { margin-top: auto; padding-top: 22px; font-size: 11px; opacity: .5; text-align: center; }
 @media (prefers-reduced-motion: reduce) {
   .c3-fan, .c3-read, .c3-stage { transition: none; }

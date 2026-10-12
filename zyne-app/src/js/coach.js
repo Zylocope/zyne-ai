@@ -96,3 +96,64 @@ const toMin = t => { const [h, m] = String(t).split(':').map(Number); return h *
 const list = a => a.length ? a.map(s => clip(s, 80)).join('; ') : 'none'
 const clip = (s, n) => (s.length > n ? s.slice(0, n - 1) + '…' : s)
 const isoDate = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+
+// ─────────────────────────────────────────────────────────────
+//  DAILY LENS — the card as a prompt for three kinds of intelligence
+//  plus one if–then plan (implementation intention: "if <cue>, then
+//  <tiny action>"), which keeps people consistent without streaks.
+//    mind   — thinking well (IQ side): break down, reframe, test
+//    heart  — handling feelings (EQ side): name it, regulate, be kind
+//    people — social intelligence: connect, ask, listen, thank
+//  Gemini personalises it from the day; LOCAL_LENS works offline.
+// ─────────────────────────────────────────────────────────────
+
+// One per suit, written for this app. Plain principles, no diagnosis.
+export const LOCAL_LENS = {
+  major: {
+    mind: 'Ask what kind of person would do today’s hardest task, then do the first minute of it as that person.',
+    heart: 'Big days stir big feelings. Name the strongest one in a single word; naming it lowers its volume.',
+    people: 'Tell one person what you are working toward. Saying it out loud makes it more real.',
+    ifThen: 'If I sit down at my desk, then I open the one thing that matters before anything else.',
+  },
+  wands: {
+    mind: 'Shrink the task until starting feels almost silly: one sentence, one file, one problem.',
+    heart: 'Restlessness is energy without a direction. Give it one target for 25 minutes.',
+    people: 'Share a rough draft with someone early. Feedback on a sketch is cheaper than on a finished piece.',
+    ifThen: 'If I feel the urge to scroll, then I do two minutes of my task first.',
+  },
+  cups: {
+    mind: 'Before deciding, ask: what would I tell a friend in this exact spot?',
+    heart: 'Check in with your body: tired, hungry, or tense? Fix that first; focus follows.',
+    people: 'Send one short, specific thank-you today. Gratitude strengthens the relationships that carry you.',
+    ifThen: 'If I notice I am being hard on myself, then I say what I would say to a friend.',
+  },
+  swords: {
+    mind: 'Write the problem as one question. Then list two possible answers before choosing.',
+    heart: 'When a thought hurts, ask: is it true, or just loud? Thoughts are guesses, not facts.',
+    people: 'In one conversation today, listen to understand, not to reply. Repeat back what you heard.',
+    ifThen: 'If I get stuck for 10 minutes, then I write down exactly where I am stuck and ask someone.',
+  },
+  pentacles: {
+    mind: 'Progress is built from boring repeats. Pick the smallest version you could do every day.',
+    heart: 'Notice one thing that went fine today. Seeing progress keeps motivation steady.',
+    people: 'Help someone with something small you are good at. Teaching sharpens what you know.',
+    ifThen: 'If I finish lunch, then I spend 15 minutes on my main project before anything else.',
+  },
+}
+
+export function localLens(card) {
+  const l = LOCAL_LENS[card?.suit] || LOCAL_LENS.major
+  return { ...l, source: 'local' }
+}
+
+export function buildLensContext(card, dayContext) {
+  return clip(`Today's card: ${card.name} (${card.suit}) — ${card.keys}. Image: ${card.image}\n${dayContext}`, 7000)
+}
+
+export function parseLens(text) {
+  let v
+  try { v = JSON.parse(String(text).replace(/^```(?:json)?\s*|\s*```$/g, '')) } catch { return null }
+  const f = k => clip(String(v?.[k] || '').trim(), 220)
+  const out = { mind: f('mind'), heart: f('heart'), people: f('people'), ifThen: f('if_then'), source: 'ai' }
+  return out.mind && out.heart && out.people && out.ifThen ? out : null
+}

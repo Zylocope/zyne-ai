@@ -7,7 +7,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             companion::companion_load, companion::companion_save,
-            companion::ai_status, companion::ai_configure, companion::ai_chat, companion::ai_suggest,
+            companion::ai_status, companion::ai_configure, companion::ai_chat, companion::ai_suggest, companion::ai_lens,
             companion::lan_start, companion::lan_stop, companion::lan_poll,
             companion::lan_publish, companion::lan_request
         ])
