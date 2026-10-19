@@ -28,7 +28,7 @@ import {
 import { listWant, addWant, toggleWant, removeWant, saveIdea, buildNudges } from './library.js'
 import { CARDS, drawIndex, randomLine } from './tarot.js'
 import { openCardStage, closeCardStage } from './card3d.js'
-import { openGrounding, openCalm, openJar } from './tools.js'
+import { openGrounding, openCalm, openJar, openReflect } from './tools.js'
 import { invoke } from '@tauri-apps/api/core'
 import { native, initStore, snapshot, chooseFile, saveFile } from './companion-store.js'
 import {
@@ -790,6 +790,7 @@ const TOOLS = [
   { key: 'ground', name: '5·4·3·2·1', sub: 'come back to the room' },
   { key: 'calm',   name: 'Calm',      sub: 'a moment of quiet' },
   { key: 'jar',    name: 'Jar',       sub: 'keep a good moment' },
+  { key: 'reflect',name: 'Reflect',   sub: 'sort it out in five questions' },
 ]
 
 function renderTools() {
@@ -806,6 +807,8 @@ function openTool(key) {
   if (key === 'ground') openGrounding()
   if (key === 'calm') openCalm()
   if (key === 'jar') openJar()
+  // the opening line uses today's mood when there is one
+  if (key === 'reflect') openReflect(MOODS.find(m => m.key === moodLog[toISODate(calendarSelected)])?.label)
 }
 
 // Major arcana art, bundled and hashed by Vite. The filename is chosen at

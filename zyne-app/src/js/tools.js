@@ -51,36 +51,32 @@ function mount(innerHTML, cls = '') {
   return stage
 }
 
-export function openGrounding() {
+// Both guided screens are the same shape: dots, a card, one button. The
+// caller supplies what a step looks like and what happens at the end.
+function stepper(steps, { cls, render, finish }) {
   let i = 0
   const el = mount(`
     <div class="g-dots" id="gDots"></div>
     <div class="g-card" id="gCard"></div>
-    <button class="btn-primary g-next" id="gNext">Next</button>`, 'tool-ground')
+    <button class="btn-primary g-next" id="gNext">Next</button>`, cls)
 
   const dots = el.querySelector('#gDots')
   const card = el.querySelector('#gCard')
   const next = el.querySelector('#gNext')
 
   const draw = () => {
-    const s = GROUNDING[i]
-    dots.innerHTML = GROUNDING.map((_, k) =>
+    dots.innerHTML = steps.map((_, k) =>
       `<i class="${k < i ? 'done' : k === i ? 'now' : ''}"></i>`).join('')
-    card.innerHTML = `
-      <div class="g-count">${s.n}</div>
-      <div class="g-line">${s.line}</div>
-      <div class="g-hint">${s.hint}</div>`
+    card.innerHTML = render(steps[i], i)
     card.classList.remove('in')
     requestAnimationFrame(() => card.classList.add('in'))
-    next.textContent = i === GROUNDING.length - 1 ? 'Done' : 'Next'
+    next.textContent = i === steps.length - 1 ? 'Done' : 'Next'
   }
 
   next.onclick = () => {
-    if (i === GROUNDING.length - 1) {
-      card.innerHTML = `<div class="g-line g-end">Back in the room.</div>`
-      dots.innerHTML = GROUNDING.map(() => '<i class="done"></i>').join('')
-      next.style.display = 'none'
-      setTimeout(closeTool, REDUCED ? 600 : 1600)
+    if (i === steps.length - 1) {
+      dots.innerHTML = steps.map(() => '<i class="done"></i>').join('')
+      finish({ el, card, next })
       return
     }
     i++
@@ -88,6 +84,21 @@ export function openGrounding() {
   }
   draw()
   return el
+}
+
+export function openGrounding() {
+  return stepper(GROUNDING, {
+    cls: 'tool-ground',
+    render: s => `
+      <div class="g-count">${s.n}</div>
+      <div class="g-line">${s.line}</div>
+      <div class="g-hint">${s.hint}</div>`,
+    finish: ({ card, next }) => {
+      card.innerHTML = `<div class="g-line g-end">Back in the room.</div>`
+      next.style.display = 'none'
+      setTimeout(closeTool, REDUCED ? 600 : 1600)
+    },
+  })
 }
 
 // A screen with nothing to do. No timer, no counter, no sound of its own —
@@ -170,4 +181,49 @@ export async function openJar() {
   input.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); add() } }
   paint()
   return el
+}
+
+// ─── reflection ───────────────────────────────────────────────
+// Guided questions, answered in your head. Local, not AI: Gemini is off
+// unless you turn it on, and a question set does not need a model to be
+// worth sitting with. Only the closing takeaway is typed, and only if you
+// want it kept.
+export const REFLECT = [
+  { q: 'Name it in one word.',                     hint: 'Angry, dread, flat, restless. Naming a feeling lowers its volume.' },
+  { q: 'Where do you feel it?',                    hint: 'Jaw, chest, stomach, shoulders. Feelings land somewhere.' },
+  { q: 'What is it actually about?',               hint: 'Not the thing that set it off — the thing underneath that.' },
+  { q: 'Which part of this is yours to move?',     hint: 'Some of it is not. That part can be set down.' },
+  { q: 'What is one small thing you could do?',    hint: 'Small enough to do today, not a plan for your life.' },
+]
+
+export function openReflect(moodLabel) {
+  return stepper(REFLECT, {
+    cls: 'tool-reflect',
+    render: (s, i) => `
+      ${i === 0 && moodLabel ? `<div class="g-hint r-opening">You marked today ${moodLabel.toLowerCase()}.</div>` : ''}
+      <div class="g-line r-q">${s.q}</div>
+      <div class="g-hint">${s.hint}</div>`,
+    finish: ({ el, card, next }) => {
+      next.style.display = 'none'
+      card.innerHTML = `
+        <div class="g-line">Keep one line from that?</div>
+        <div class="g-hint">Only if it is worth reading again.</div>
+        <div class="jar-add r-keep">
+          <input id="rInput" class="input-field" maxlength="140" autocomplete="off" placeholder="optional">
+          <button class="btn-primary" id="rSave">Keep</button>
+        </div>
+        <button class="jar-pull" id="rSkip">No need</button>`
+      card.classList.add('in')
+      const done = () => { card.innerHTML = `<div class="g-line g-end">Sorted, for now.</div>`; setTimeout(closeTool, REDUCED ? 600 : 1400) }
+      el.querySelector('#rSkip').onclick = done
+      el.querySelector('#rSave').onclick = async () => {
+        const text = el.querySelector('#rInput').value.trim()
+        if (text) { try { await addEntry(todayISO(), 'note', `Reflected: ${text}`) } catch (e) { console.warn('reflect:', e) } }
+        done()
+      }
+      el.querySelector('#rInput').onkeydown = e => {
+        if (e.key === 'Enter') { e.preventDefault(); el.querySelector('#rSave').click() }
+      }
+    },
+  })
 }
