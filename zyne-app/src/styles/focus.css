@@ -582,3 +582,21 @@ html.tool-open, html.tool-open body { overflow: hidden; }
 .r-opening { margin-bottom: 18px; opacity: .8; }
 .r-q { font-size: clamp(22px, 6vw, 28px); }
 .r-keep { margin-top: 26px; }
+
+/* Looking back — a month of moods, and what was going on */
+.tool-temp .tool-body { max-width: 330px; }
+.t-head { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: #cfe0c8a0; margin-bottom: 16px; }
+.t-strip { display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px; }
+.t-day {
+  aspect-ratio: 1; border-radius: 4px; cursor: pointer; padding: 0;
+  border: 1px solid #ffffff1f; background: #ffffff0d;
+}
+.t-day.on { background: color-mix(in srgb, var(--tone) 62%, transparent); border-color: transparent; }
+.t-day.sel { outline: 2px solid #f3efe2; outline-offset: 1px; }
+.t-sum { margin-top: 16px; font-family: "Instrument Serif", Georgia, serif; font-size: 17px; color: #f3efe2; }
+.t-detail { margin-top: 20px; min-height: 84px; text-align: left; }
+.t-date { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: #cfe0c8a0; margin-bottom: 8px; }
+.t-notes { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.t-notes li { font-size: 13px; line-height: 1.5; color: #f3efe2; padding-left: 12px; position: relative; }
+.t-notes li::before { content: "·"; position: absolute; left: 2px; color: #cfe0c870; }
+.t-hint { font-size: 12px; color: #cfe0c870; line-height: 1.6; }

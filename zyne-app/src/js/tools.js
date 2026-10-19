@@ -22,7 +22,7 @@ export const GROUNDING = [
 
 import { randomLine } from './tarot.js'
 import { getSetting, setSetting } from './db.js'
-import { addEntry } from './journal.js'
+import { addEntry, loadDay } from './journal.js'
 
 let stage = null
 
@@ -226,4 +226,66 @@ export function openReflect(moodLabel) {
       }
     },
   })
+}
+
+// ─── temperature ──────────────────────────────────────────────
+// A look back, not another input. The mood is already logged and the day
+// already has notes, so this reads them rather than asking for anything
+// new. Counts per mood, never a run of days — a streak would turn a
+// feeling into a score to protect.
+const DAY_MS = 86400000
+const isoOf = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+
+export function lastDays(n, today = new Date()) {
+  const out = []
+  for (let i = n - 1; i >= 0; i--) out.push(isoOf(new Date(today.getTime() - i * DAY_MS)))
+  return out
+}
+
+// "mostly good · some rough" — the shape of a stretch, in words
+export function summarise(days, moodLog, moods) {
+  const counts = new Map()
+  for (const iso of days) {
+    const k = moodLog[iso]
+    if (k) counts.set(k, (counts.get(k) || 0) + 1)
+  }
+  const total = [...counts.values()].reduce((a, b) => a + b, 0)
+  if (!total) return 'Nothing logged yet.'
+  const ranked = [...counts.entries()].sort((a, b) => b[1] - a[1])
+  const label = k => moods.find(m => m.key === k)?.label.toLowerCase() || k
+  const lead = `mostly ${label(ranked[0][0])}`
+  const rest = ranked.length > 1 ? `, some ${label(ranked[1][0])}` : ''
+  return `${total} day${total === 1 ? '' : 's'} logged — ${lead}${rest}`
+}
+
+export function openTemperature(moodLog, moods) {
+  const days = lastDays(30)
+  const tone = iso => moods.find(m => m.key === moodLog[iso])?.tone
+  const el = mount(`
+    <div class="t-head">The last 30 days</div>
+    <div class="t-strip">${days.map(iso => {
+      const c = tone(iso)
+      return `<button class="t-day${c ? ' on' : ''}" data-iso="${iso}"
+                ${c ? `style="--tone:${c}"` : ''} aria-label="${iso}"></button>`
+    }).join('')}</div>
+    <div class="t-sum">${summarise(days, moodLog, moods)}</div>
+    <div class="t-detail" id="tDetail"><div class="t-hint">Tap a day to see what was going on.</div></div>`, 'tool-temp')
+
+  const detail = el.querySelector('#tDetail')
+  el.querySelectorAll('.t-day').forEach(b => {
+    b.onclick = async () => {
+      el.querySelectorAll('.t-day').forEach(o => o.classList.remove('sel'))
+      b.classList.add('sel')
+      const iso = b.dataset.iso
+      const mood = moods.find(m => m.key === moodLog[iso])
+      let notes = []
+      try { notes = (await loadDay(iso)).filter(e => e.type === 'note') } catch { notes = [] }
+      detail.innerHTML = `
+        <div class="t-date">${iso}${mood ? ` · ${mood.label.toLowerCase()}` : ''}</div>
+        ${notes.length
+          ? `<ul class="t-notes">${notes.slice(0, 6).map(n => `<li>${n.text}</li>`).join('')}</ul>`
+          : `<div class="t-hint">No notes that day.</div>`}`
+    }
+  })
+  return el
 }

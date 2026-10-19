@@ -5,6 +5,7 @@ import { nextPhase, youtubeId, parseSounds, fmtClock, METHODS, methodByKey, brea
 import { parseList, serializeList, buildNudges, daysSince, slug } from './library.js'
 import { extractIdeas, bookFromTitle } from './books.js'
 import { CARDS, READINGS, parseDeck, parseLines } from './tarot.js'
+import { lastDays, summarise, GROUNDING, REFLECT } from './tools.js'
 import { chatWindow } from './companion-model.js'
 
 // ── pomodoro: the long break lands only after the 4th focus round
@@ -272,3 +273,30 @@ console.log('ok — companion chat window')
   assert.ok(showcaseNames(parseSources(SHOWCASE_SOURCES)).size >= 5)
   console.log('ok — feed deadlines and showcase')
 }
+
+// ── looking back: the window, and how a stretch is described
+const MOODS_T = [{ key: 'good', label: 'Good' }, { key: 'rough', label: 'Rough' }, { key: 'low', label: 'Low' }]
+const look30Anchor = new Date(2026, 9, 20)                 // 20 Oct 2026, local
+const look30 = lastDays(30, look30Anchor)
+assert.equal(look30.length, 30)
+assert.equal(look30[29], '2026-10-20', 'the window ends today')
+assert.equal(look30[0], '2026-09-21', 'and starts 29 days earlier')
+assert.equal(new Set(look30).size, 30, 'no repeated days')
+// a 7-day window across a month boundary still walks one day at a time
+assert.deepEqual(lastDays(3, new Date(2026, 0, 2)), ['2025-12-31', '2026-01-01', '2026-01-02'])
+
+assert.equal(summarise(look30, {}, MOODS_T), 'Nothing logged yet.')
+assert.equal(summarise(['2026-10-20'], { '2026-10-20': 'good' }, MOODS_T), '1 day logged — mostly good')
+assert.equal(
+  summarise(['a','b','c','d'], { a: 'good', b: 'good', c: 'rough', d: 'good' }, MOODS_T),
+  '4 days logged — mostly good, some rough')
+// days with no mood are simply not counted
+assert.equal(summarise(['a','b'], { a: 'low' }, MOODS_T), '1 day logged — mostly low')
+
+// the guided screens must not quietly lose a step
+assert.equal(GROUNDING.length, 5)
+assert.deepEqual(GROUNDING.map(s => s.n), [5, 4, 3, 2, 1], 'grounding counts down')
+assert.equal(REFLECT.length, 5)
+assert.ok(REFLECT.every(s => s.q && s.hint))
+
+console.log('ok — looking back, grounding and reflection')
