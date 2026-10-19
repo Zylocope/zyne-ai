@@ -21,6 +21,8 @@ export const GROUNDING = [
 ]
 
 import { randomLine } from './tarot.js'
+import { getSetting, setSetting } from './db.js'
+import { addEntry } from './journal.js'
 
 let stage = null
 
@@ -106,5 +108,66 @@ export function openCalm() {
   }
   btn.onclick = show
   show()
+  return el
+}
+
+// ─── the jar ──────────────────────────────────────────────────
+// Good moments, kept. Typing one line is the whole feature here, so this
+// is the one screen that asks for input — but it is a note, not a form:
+// no fields, no date picker, no category. The line also lands in today's
+// journal, so the vault keeps the real record and the jar stays a view.
+const JAR_MAX = 300
+const todayISO = () => {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+const readJar = async () => {
+  try { return JSON.parse((await getSetting('jar')) || '[]') } catch { return [] }
+}
+
+export async function openJar() {
+  let jar = await readJar()
+  const el = mount(`
+    <div class="jar-glass" aria-hidden="true"><span id="jarCount"></span></div>
+    <div class="jar-pulled" id="jarPulled"></div>
+    <div class="jar-add">
+      <input id="jarInput" class="input-field" maxlength="140" autocomplete="off"
+             placeholder="something good, in a few words">
+      <button class="btn-primary" id="jarAdd">Keep</button>
+    </div>
+    <button class="jar-pull" id="jarPull">Pull one out</button>`, 'tool-jar')
+
+  const count = el.querySelector('#jarCount')
+  const pulled = el.querySelector('#jarPulled')
+  const input = el.querySelector('#jarInput')
+
+  // motes in the jar, capped so a full jar does not become a crowd
+  const paint = () => {
+    count.textContent = jar.length ? jar.length : ''
+    el.querySelector('.jar-glass').dataset.full = Math.min(jar.length, 40)
+  }
+
+  const add = async () => {
+    const text = input.value.trim()
+    if (!text) return
+    input.value = ''
+    jar = [{ d: todayISO(), t: text }, ...jar].slice(0, JAR_MAX)
+    await setSetting('jar', JSON.stringify(jar))
+    paint()
+    pulled.innerHTML = `<div class="jar-note in">${text}</div>`
+    try { await addEntry(todayISO(), 'note', `Good: ${text}`) } catch (e) { console.warn('jar:', e) }
+  }
+
+  const pull = () => {
+    if (!jar.length) { pulled.innerHTML = `<div class="jar-note in jar-empty">Nothing in here yet.</div>`; return }
+    const one = jar[Math.floor(Math.random() * jar.length)]
+    pulled.innerHTML = `<div class="jar-note"><span class="jar-when">${one.d}</span>${one.t}</div>`
+    requestAnimationFrame(() => pulled.firstElementChild.classList.add('in'))
+  }
+
+  el.querySelector('#jarAdd').onclick = add
+  el.querySelector('#jarPull').onclick = pull
+  input.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); add() } }
+  paint()
   return el
 }

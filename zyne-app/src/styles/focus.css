@@ -548,3 +548,32 @@ html.tool-open, html.tool-open body { overflow: hidden; }
   .c-orb { animation: none; }
   .c-line { transition: none; opacity: 1; }
 }
+
+/* The jar — good moments, kept */
+.tool-jar .tool-body { max-width: 320px; }
+.jar-glass {
+  width: 110px; height: 132px; margin: 0 auto 20px; position: relative;
+  border: 1px solid #cfe0c840; border-radius: 10px 10px 26px 26px;
+  background: linear-gradient(to top, #cfe0c81f, transparent 62%);
+  display: flex; align-items: flex-end; justify-content: center; padding-bottom: 16px;
+}
+.jar-glass::before { /* lid */
+  content: ""; position: absolute; top: -9px; left: 18px; right: 18px; height: 9px;
+  border: 1px solid #cfe0c840; border-radius: 4px 4px 0 0; background: #cfe0c81a;
+}
+.jar-glass span { font-family: "Instrument Serif", Georgia, serif; font-size: 34px; color: #cfe0c8; }
+.jar-pulled { min-height: 62px; margin-bottom: 16px; }
+.jar-note {
+  font-family: "Instrument Serif", Georgia, serif; font-size: 17px; line-height: 1.5;
+  color: #f3efe2; opacity: 0; transform: translateY(6px); transition: opacity .4s, transform .4s;
+}
+.jar-note.in { opacity: 1; transform: none; }
+.jar-empty { color: #cfe0c870; font-size: 15px; }
+.jar-when { display: block; font-family: inherit; font-size: 9px; letter-spacing: .1em; color: #cfe0c870; margin-bottom: 5px; }
+.jar-add { display: flex; gap: 8px; }
+.jar-add .input-field { flex: 1; min-width: 0; }
+.jar-pull {
+  margin-top: 16px; background: none; border: 0; cursor: pointer; font: inherit;
+  font-size: 11px; letter-spacing: .1em; color: #cfe0c8a0; text-transform: uppercase;
+}
+@media (prefers-reduced-motion: reduce) { .jar-note { transition: none; opacity: 1; transform: none; } }
