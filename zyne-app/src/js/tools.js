@@ -289,3 +289,45 @@ export function openTemperature(moodLog, moods) {
   })
   return el
 }
+
+// ─── borrowed goals ───────────────────────────────────────────
+// A shelf of small, ordinary self-care tasks. Tap one and it becomes a
+// task in today's journal — no typing, which is the point: the hard part
+// of a habit is rarely writing it down. Already-added ones are marked so
+// the same goal does not land twice.
+export const GOALS = [
+  ['Morning', ['Wake at a steady time', 'Make the bed', 'Step outside for a minute', 'Drink a glass of water']],
+  ['Body',    ['Walk for fifteen minutes', 'Stretch your shoulders', 'Eat something green', 'Be in bed by midnight']],
+  ['Mind',    ['Read ten pages', 'One hour away from the phone', 'Write down what is on your mind', 'Sit still for five minutes']],
+  ['Home',    ['Clear one surface', 'Wash tonight’s dishes', 'Open a window', 'Put away what is out']],
+  ['People',  ['Message someone you miss', 'Thank one person properly', 'Ask someone how they really are']],
+]
+
+export async function openGoals(onAdd) {
+  const iso = todayISO()
+  let existing = new Set()
+  try { existing = new Set((await loadDay(iso)).filter(e => e.type === 'task').map(e => e.text)) } catch {}
+
+  const el = mount(`
+    <div class="t-head">Borrow a goal for today</div>
+    <div class="goal-groups">${GOALS.map(([group, items]) => `
+      <div class="goal-group">
+        <div class="goal-label">${group}</div>
+        ${items.map(t => `
+          <button class="goal${existing.has(t) ? ' added' : ''}" data-text="${t.replace(/"/g, '&quot;')}">
+            <span>${t}</span><i></i>
+          </button>`).join('')}
+      </div>`).join('')}</div>`, 'tool-goals')
+
+  el.querySelectorAll('.goal').forEach(b => {
+    b.onclick = async () => {
+      if (b.classList.contains('added')) return
+      b.classList.add('added')
+      try {
+        await addEntry(iso, 'task', b.dataset.text)
+        onAdd?.()
+      } catch (e) { console.warn('goal:', e); b.classList.remove('added') }
+    }
+  })
+  return el
+}

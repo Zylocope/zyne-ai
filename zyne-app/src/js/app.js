@@ -28,7 +28,7 @@ import {
 import { listWant, addWant, toggleWant, removeWant, saveIdea, buildNudges } from './library.js'
 import { CARDS, drawIndex, randomLine } from './tarot.js'
 import { openCardStage, closeCardStage } from './card3d.js'
-import { openGrounding, openCalm, openJar, openReflect, openTemperature } from './tools.js'
+import { openGrounding, openCalm, openJar, openReflect, openTemperature, openGoals } from './tools.js'
 import { invoke } from '@tauri-apps/api/core'
 import { native, initStore, snapshot, chooseFile, saveFile } from './companion-store.js'
 import {
@@ -792,6 +792,7 @@ const TOOLS = [
   { key: 'jar',    name: 'Jar',       sub: 'keep a good moment' },
   { key: 'reflect',name: 'Reflect',   sub: 'sort it out in five questions' },
   { key: 'temp',   name: 'Looking back', sub: 'how the last month went' },
+  { key: 'goals',  name: 'Goals',     sub: 'borrow one for today' },
 ]
 
 function renderTools() {
@@ -810,6 +811,7 @@ function openTool(key) {
   if (key === 'jar') openJar()
   // the opening line uses today's mood when there is one
   if (key === 'temp') openTemperature(moodLog, MOODS)
+  if (key === 'goals') openGoals(loadJournal)
   if (key === 'reflect') openReflect(MOODS.find(m => m.key === moodLog[toISODate(calendarSelected)])?.label)
 }
 
