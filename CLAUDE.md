@@ -52,6 +52,8 @@ zyne-app/
     focus.js              Pomodoro state machine, sound roles (pure, tested)
     coach.js              "What next?" day summary, reply parsing, nudge slots (pure, tested)
     card3d.js             full-screen 3D daily card stage (phone)
+    tools.js              the small self-care screens: grounding, calm, jar,
+                          reflection, looking back, borrowed goals (pure parts tested)
     tarot.js              78-card deck + lines to sit with (pure, tested)
     library.js            reading list + saved ideas as markdown (pure parts tested)
     journal.js            bullet-journal markdown engine
@@ -145,6 +147,15 @@ Under the card sits **Today's lens** (`ai_lens`, coach.js): Mind (thinking),
 Heart (feelings), People (social) and one if–then plan the user can add to
 the journal. The card is a theme, never a prediction. Without AI it uses
 `LOCAL_LENS` per suit; AI results are cached per day as `tarot_lens`.
+
+**`j-` class names belong to the journal.** `j-row`, `j-note`, `j-text`,
+`j-title`, `j-meta`, `j-check`, `j-act` and friends style the day log. The
+jar first shipped with `j-note` and silently restyled every note in the
+journal. New screens prefix their own classes (`jar-`, `g-`, `t-`, `goal-`).
+
+**Self-care screens keep no score.** Mood is words, not 1-to-5, because a
+number invites you to chase a higher one. Looking back counts days per mood
+and never a run of them. The same rule as the reading nudges: no streaks.
 
 **Feed requests have deadlines.** `httpGet` aborts after 10 s and each source
 is capped at 20 s (`withTimeout` in feed.js); ranking is capped at 30 s and
