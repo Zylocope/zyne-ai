@@ -20,6 +20,8 @@ export const GROUNDING = [
   { n: 1, sense: 'taste', line: 'One thing you can taste.',   hint: 'Even just your own mouth.' },
 ]
 
+import { randomLine } from './tarot.js'
+
 let stage = null
 
 export function closeTool() {
@@ -83,5 +85,26 @@ export function openGrounding() {
     draw()
   }
   draw()
+  return el
+}
+
+// A screen with nothing to do. No timer, no counter, no sound of its own —
+// the sound chips already handle audio, and pulling a YouTube player in here
+// would drag their visible-player policy along with it. Tap for another line.
+export function openCalm() {
+  const el = mount(`
+    <div class="c-orb" aria-hidden="true"></div>
+    <button class="c-line" id="cLine" aria-label="Another line"></button>
+    <div class="c-hint">tap for another · close when you're ready</div>`, 'tool-calm')
+
+  const btn = el.querySelector('#cLine')
+  const show = () => {
+    const l = randomLine()
+    btn.innerHTML = `${l.text}${l.who ? ` <span class="c-who">${l.who}</span>` : ''}`
+    btn.classList.remove('in')
+    requestAnimationFrame(() => btn.classList.add('in'))
+  }
+  btn.onclick = show
+  show()
   return el
 }

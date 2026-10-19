@@ -526,3 +526,25 @@ html.tool-open, html.tool-open body { overflow: hidden; }
   .tool-stage, .g-card, .g-dots i { transition: none; }
   .g-card { opacity: 1; transform: none; }
 }
+
+/* Calm — a screen with nothing to do */
+.tool-calm .tool-body { max-width: 300px; }
+.c-orb {
+  width: 140px; height: 140px; margin: 0 auto 34px; border-radius: 50%;
+  background: radial-gradient(circle at 42% 38%, #cfe0c84d, #cfe0c80d 62%, transparent 72%);
+  border: 1px solid #cfe0c826; animation: c-breathe 11s ease-in-out infinite;
+}
+@keyframes c-breathe { 0%, 100% { transform: scale(.88); opacity: .72 } 50% { transform: scale(1.06); opacity: 1 } }
+.c-line {
+  display: block; width: 100%; cursor: pointer; background: none; border: 0; padding: 0;
+  font-family: "Instrument Serif", Georgia, serif; font-style: italic;
+  font-size: clamp(19px, 5.4vw, 24px); line-height: 1.5; color: #f3efe2;
+  opacity: 0; transition: opacity .5s;
+}
+.c-line.in { opacity: 1; }
+.c-who { font-style: normal; font-size: 11px; opacity: .6; white-space: nowrap; }
+.c-hint { margin-top: 30px; font-size: 10px; letter-spacing: .1em; color: #cfe0c870; }
+@media (prefers-reduced-motion: reduce) {
+  .c-orb { animation: none; }
+  .c-line { transition: none; opacity: 1; }
+}

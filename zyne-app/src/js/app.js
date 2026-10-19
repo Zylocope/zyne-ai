@@ -28,7 +28,7 @@ import {
 import { listWant, addWant, toggleWant, removeWant, saveIdea, buildNudges } from './library.js'
 import { CARDS, drawIndex, randomLine } from './tarot.js'
 import { openCardStage, closeCardStage } from './card3d.js'
-import { openGrounding } from './tools.js'
+import { openGrounding, openCalm } from './tools.js'
 import { invoke } from '@tauri-apps/api/core'
 import { native, initStore, snapshot, chooseFile, saveFile } from './companion-store.js'
 import {
@@ -788,6 +788,7 @@ async function setMood(key) {
 // leaves nothing behind — none of these keep score.
 const TOOLS = [
   { key: 'ground', name: '5·4·3·2·1', sub: 'come back to the room' },
+  { key: 'calm',   name: 'Calm',      sub: 'a moment of quiet' },
 ]
 
 function renderTools() {
@@ -802,6 +803,7 @@ function renderTools() {
 
 function openTool(key) {
   if (key === 'ground') openGrounding()
+  if (key === 'calm') openCalm()
 }
 
 // Major arcana art, bundled and hashed by Vite. The filename is chosen at
