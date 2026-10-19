@@ -441,3 +441,23 @@ html.c3-open, html.c3-open body { overflow: hidden; }
 }
 /* sized against the card, which is min(62vw, 280px) wide */
 .c3-front .tnum { font-size: clamp(12px, 3.4vw, 15px); margin-top: 4px; }
+
+/* ─── card art ─────────────────────────────────────────────── */
+/* The illustration sits inside the card's own frame and drifts a few px
+   against it as the card tilts, so the printed border reads as nearer
+   than the picture. Scaled slightly so the drift never exposes an edge. */
+.tart {
+  flex: 1; width: 100%; min-height: 0; margin-top: 4px;
+  display: block; overflow: hidden; border-radius: 6px;
+}
+.tart img {
+  width: 100%; height: 100%; object-fit: contain; display: block;
+  transform: translate3d(var(--px, 0), var(--py, 0), 0) scale(1.05);
+  will-change: transform;
+}
+/* with art the card carries its own picture, so the drawn inner rule would
+   be a third nested frame — drop it */
+.c3-front:has(.tart)::before { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .tart img { transform: none; }
+}

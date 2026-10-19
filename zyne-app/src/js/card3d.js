@@ -174,6 +174,11 @@ function mountMotion(c, startRy, targetRy = startRy) {
     const sx = 50 + Math.sin(y * Math.PI / 180) * 60, sy = 50 - shownRx * 2
     c.el.style.setProperty('--sx', `${sx.toFixed(1)}%`)
     c.el.style.setProperty('--sy', `${sy.toFixed(1)}%`)
+    // the art rides slightly against the card it sits in, so the printed
+    // frame reads as nearer than the picture. A 2D shift, not a Z plane:
+    // .c3-face uses overflow:hidden, which flattens preserve-3d anyway.
+    c.el.style.setProperty('--px', `${(Math.sin(y * Math.PI / 180) * -7).toFixed(2)}px`)
+    c.el.style.setProperty('--py', `${(shownRx * 0.22).toFixed(2)}px`)
     const dropX = clamp(-Math.sin(y * Math.PI / 180) * 18, -18, 18)
     c.el.style.setProperty('--drop', `${dropX.toFixed(1)}px`)
     raf = requestAnimationFrame(tick)

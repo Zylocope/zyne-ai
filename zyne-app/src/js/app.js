@@ -727,15 +727,31 @@ function markField(card, base) {
   return `<span class="pips" style="grid-template-columns:repeat(${PIP_COLS[card.rank]},auto)">${pips}</span>`
 }
 
+// Major arcana art, bundled and hashed by Vite. The filename is chosen at
+// runtime from the card name, so it has to come through a glob rather than
+// a plain import. A card with no file falls back to its drawn mark, which
+// is how the courts and the un-illustrated cards still render.
+const ART = Object.fromEntries(
+  Object.entries(import.meta.glob('../assets/tarot/*.jpg', { eager: true, query: '?url', import: 'default' }))
+    .map(([path, url]) => [path.split('/').pop().replace(/\.jpg$/, ''), url])
+)
+const artFor = name =>
+  ART[name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')]
+
 // Phone only. The laptop is for working, so the card stays off it.
 // In the Journal it is one compact row; tapping it opens the 3D stage
 // (card3d.js), where you pick, flip and tilt the card.
-const cardFace = card => `
+const cardFace = card => {
+  const art = artFor(card.name)
+  return `
   ${card.numeral ? `<div class="tnum">${esc(card.numeral)}</div>` : ''}
-  <span class="tmark${card.rank ? ' has-pips' : ''}">${markField(card, 110)}</span>
+  ${art
+    ? `<span class="tart"><img src="${art}" alt="" draggable="false"></span>`
+    : `<span class="tmark${card.rank ? ' has-pips' : ''}">${markField(card, 110)}</span>`}
   <div class="tname">${esc(card.name)}</div>
-  <div class="timg">${esc(card.image)}</div>
+  ${art ? '' : `<div class="timg">${esc(card.image)}</div>`}
   <div class="tkeys">${esc(card.keys)}</div>`
+}
 const cardBack = () => `<span class="tmark">${suitSvg('back', 34)}</span>`
 const lineHTML = () =>
   `${esc(todayLine.text)}${todayLine.who ? ` <span class="daily-who">${esc(todayLine.who)}</span>` : ''}`
