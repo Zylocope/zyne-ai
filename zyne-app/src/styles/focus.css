@@ -461,3 +461,20 @@ html.c3-open, html.c3-open body { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
   .tart img { transform: none; }
 }
+
+/* ─── mood ─────────────────────────────────────────────────── */
+.mood-row { margin: 0 0 14px; }
+.mood-faces { display: flex; gap: 6px; }
+.mood-face {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;
+  padding: 9px 2px 8px; border-radius: 13px; cursor: pointer;
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--muted); font: inherit; font-size: 9px; letter-spacing: .05em;
+  transition: border-color .2s, color .2s, transform .15s;
+}
+.mood-face svg { width: 26px; height: 26px; }
+.mood-face:active { transform: translateY(1px); }
+.mood-face.on { color: var(--tone); border-color: var(--tone); background: color-mix(in srgb, var(--tone) 9%, var(--surface)); }
+/* a logged day wears its mood behind the number, so a month reads at a glance */
+.mm-cell.has-mood { background: color-mix(in srgb, var(--tone) 22%, transparent); }
+@media (prefers-reduced-motion: reduce) { .mood-face { transition: none; } }

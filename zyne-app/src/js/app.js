@@ -82,6 +82,7 @@ async function init() {
   bindInputs()
 
   try { await getDb() } catch (e) { console.warn('DB init skipped:', e) }
+  await loadMoods()
   // A damaged sync index must not stop the app; sync just reports it.
   try { await initStore() } catch (e) { console.warn('companion store:', e) }
   setSyncStatus(msg => { setStatus('syncStatus', msg); flashToast(msg) })
@@ -727,6 +728,61 @@ function markField(card, base) {
   return `<span class="pips" style="grid-template-columns:repeat(${PIP_COLS[card.rank]},auto)">${pips}</span>`
 }
 
+// ═════════════════════════════════════════════════════════════
+//  MOOD
+//  One tap a day. Words, not scores — a 1-to-5 rating invites you to
+//  chase a higher number, and a mood is not a performance. The month
+//  above tints itself so patterns show up without anyone counting
+//  anything at you. No streaks, by the same rule as the reading nudges.
+// ═════════════════════════════════════════════════════════════
+const MOODS = [
+  { key: 'rough',  label: 'Rough',  tone: 'var(--news)',    face: 'M14 25c1.6-2.2 3.6-3.3 6-3.3s4.4 1.1 6 3.3' },
+  { key: 'low',    label: 'Low',    tone: 'var(--skeptic)', face: 'M14 24h12' },
+  { key: 'okay',   label: 'Okay',   tone: 'var(--muted)',   face: 'M15 23.5c1.3.9 2.9 1.3 5 1.3s3.7-.4 5-1.3' },
+  { key: 'good',   label: 'Good',   tone: 'var(--learn)',   face: 'M13.5 22c1.8 2.6 4 3.9 6.5 3.9s4.7-1.3 6.5-3.9' },
+  { key: 'bright', label: 'Bright', tone: 'var(--pers)',    face: 'M13 21c1.2 3.6 3.6 5.4 7 5.4s5.8-1.8 7-5.4Z' },
+]
+let moodLog = {}                               // { '2026-10-20': 'good' }
+
+async function loadMoods() {
+  try { moodLog = JSON.parse((await getSetting('mood_log')) || '{}') } catch { moodLog = {} }
+}
+
+function renderMoodRow() {
+  const host = document.getElementById('moodRow')
+  if (!host) return
+  const iso = toISODate(calendarSelected)
+  const picked = moodLog[iso]
+  host.innerHTML = `<div class="j-section-label">HOW IS IT GOING</div>
+    <div class="mood-faces">${MOODS.map(m => `
+      <button class="mood-face${picked === m.key ? ' on' : ''}" style="--tone:${m.tone}"
+              onclick="window.setMood('${m.key}')"
+              aria-pressed="${picked === m.key}" aria-label="${m.label}">
+        <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.6"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="20" cy="20" r="14"/><circle cx="15" cy="16.5" r=".9" fill="currentColor"/>
+          <circle cx="25" cy="16.5" r=".9" fill="currentColor"/><path d="${m.face}"/>
+        </svg>
+        <span>${m.label}</span>
+      </button>`).join('')}</div>`
+}
+
+// Tapping the mood you already picked clears it — a wrong tap should not
+// be permanent, and nothing here is worth a confirm dialog.
+async function setMood(key) {
+  const iso = toISODate(calendarSelected)
+  const was = moodLog[iso]
+  if (was === key) delete moodLog[iso]; else moodLog[iso] = key
+  await setSetting('mood_log', JSON.stringify(moodLog))
+  renderMoodRow()
+  renderMiniMonth()
+  if (was === key) return
+  try {
+    await addEntry(iso, 'note', `Mood: ${MOODS.find(m => m.key === key).label.toLowerCase()}`)
+    await loadJournal()
+  } catch (e) { console.warn('log mood:', e) }
+}
+
 // Major arcana art, bundled and hashed by Vite. The filename is chosen at
 // runtime from the card name, so it has to come through a glob rather than
 // a plain import. A card with no file falls back to its drawn mark, which
@@ -1028,6 +1084,7 @@ async function loadJournal() {
   }
   renderMiniMonth()
   renderDayLog()
+  renderMoodRow()
   updateDateLabel()
 }
 
@@ -1220,8 +1277,12 @@ function renderMiniMonth() {
     if (!c.inMonth) classes.push('other-month')
     if (c.iso === todayISO) classes.push('today')
     if (c.iso === selISO) classes.push('selected')
+    // a day you logged carries its mood as a wash behind the number
+    const mood = moodLog[c.iso]
+    if (mood) classes.push('has-mood')
+    const tone = mood ? MOODS.find(m => m.key === mood)?.tone : null
     return `
-      <div class="${classes.join(' ')}" data-iso="${c.iso}" onclick="window.selectCalendarDate('${c.iso}')">
+      <div class="${classes.join(' ')}" data-iso="${c.iso}"${tone ? ` style="--tone:${tone}"` : ''} onclick="window.selectCalendarDate('${c.iso}')">
         ${c.date.getDate()}
         ${busy.has(c.iso) ? '<div class="mm-dot"></div>' : ''}
       </div>`
@@ -1703,6 +1764,8 @@ Object.assign(window, {
   beginCompose, startSession, stopSession, skipPhase, setMethod,
   toggleFocusSettings,
   playSound, stopSound, openExternal, playNight, toggleNightDone,
+  // Mood
+  setMood,
   // Daily card
   drawDailyCard, shuffleLine, openDailyCard, keepIfThen,
   // Library
