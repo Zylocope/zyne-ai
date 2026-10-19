@@ -28,6 +28,7 @@ import {
 import { listWant, addWant, toggleWant, removeWant, saveIdea, buildNudges } from './library.js'
 import { CARDS, drawIndex, randomLine } from './tarot.js'
 import { openCardStage, closeCardStage } from './card3d.js'
+import { openGrounding } from './tools.js'
 import { invoke } from '@tauri-apps/api/core'
 import { native, initStore, snapshot, chooseFile, saveFile } from './companion-store.js'
 import {
@@ -783,6 +784,26 @@ async function setMood(key) {
   } catch (e) { console.warn('log mood:', e) }
 }
 
+// The tool shelf. Each chip opens a small screen that closes again and
+// leaves nothing behind — none of these keep score.
+const TOOLS = [
+  { key: 'ground', name: '5·4·3·2·1', sub: 'come back to the room' },
+]
+
+function renderTools() {
+  const host = document.getElementById('toolsRow')
+  if (!host) return
+  host.innerHTML = TOOLS.map(t => `
+    <button class="tool-chip" onclick="window.openTool('${t.key}')">
+      <span class="tool-name">${esc(t.name)}</span>
+      <span class="tool-sub">${esc(t.sub)}</span>
+    </button>`).join('')
+}
+
+function openTool(key) {
+  if (key === 'ground') openGrounding()
+}
+
 // Major arcana art, bundled and hashed by Vite. The filename is chosen at
 // runtime from the card name, so it has to come through a glob rather than
 // a plain import. A card with no file falls back to its drawn mark, which
@@ -1085,6 +1106,7 @@ async function loadJournal() {
   renderMiniMonth()
   renderDayLog()
   renderMoodRow()
+  renderTools()
   updateDateLabel()
 }
 
@@ -1766,6 +1788,8 @@ Object.assign(window, {
   playSound, stopSound, openExternal, playNight, toggleNightDone,
   // Mood
   setMood,
+  // Tools
+  openTool,
   // Daily card
   drawDailyCard, shuffleLine, openDailyCard, keepIfThen,
   // Library
