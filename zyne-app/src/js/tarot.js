@@ -148,11 +148,28 @@ function lines(text) {
 }
 
 // Name | image | keywords  →  {name, image, keys, suit}
+// Ace…Ten carry a count the art has to show, so the renderer repeats the
+// suit mark that many times. Courts and majors carry none and get rank 0,
+// which draws a single mark instead.
+const RANKS = ['Ace', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten']
+
+// Majors run 0–XXI in the order the deck lists them; pips run I–X. Courts
+// carry no number, which is why they are the only cards with an empty one.
+const ROMAN = ['0', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X',
+  'XI', 'XII', 'XIII', 'XIV', 'XV', 'XVI', 'XVII', 'XVIII', 'XIX', 'XX', 'XXI']
+
 export function parseDeck(text = DECK) {
+  let majorIndex = 0
   return lines(text).map(l => {
     const [name, image, keys] = l.split('|').map(p => (p || '').trim())
     const m = /\bof (Wands|Cups|Swords|Pentacles)$/.exec(name)
-    return { name, image, keys, suit: m ? m[1].toLowerCase() : 'major' }
+    const r = /^(\S+) of /.exec(name)
+    const suit = m ? m[1].toLowerCase() : 'major'
+    const rank = m && r ? RANKS.indexOf(r[1]) + 1 : 0
+    return {
+      name, image, keys, suit, rank,
+      numeral: suit === 'major' ? ROMAN[majorIndex++] : rank ? ROMAN[rank] : '',
+    }
   })
 }
 

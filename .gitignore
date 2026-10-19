@@ -31,3 +31,10 @@ apikey.txt
 !**/.claude/commands/
 .DS_Store
 Thumbs.db
+
+# ── tarot masters ─────────────────────────────────────────────
+# Logo/*.jpg holds the 2048px card originals, ~51MB against a 6.8MB repo.
+# Git keeps blobs forever, so these stay out; the 1024px copies the app
+# actually loads are committed under zyne-app/src/assets/tarot/.
+# Back the masters up somewhere off this laptop — they cannot be regenerated.
+Logo/*.jpg

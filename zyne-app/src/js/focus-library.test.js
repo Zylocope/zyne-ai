@@ -140,6 +140,39 @@ assert.equal(parseDeck('The Fool | a pup at the cliff | trust').length, 1, 'comm
 assert.deepEqual(parseLines('Know thyself. — Delphi')[0], { text: 'Know thyself.', who: 'Delphi' })
 assert.ok(READINGS.length >= 20 && READINGS.every(l => l.text), 'lines must not be empty')
 
+// ── pip ranks: the count the renderer loops over
+const rank = n => CARDS.find(c => c.name === n).rank
+assert.equal(rank('Ace of Wands'), 1)
+assert.equal(rank('Five of Cups'), 5)
+assert.equal(rank('Nine of Swords'), 9)
+assert.equal(rank('Ten of Pentacles'), 10)
+// courts and majors carry no count, so they draw a single mark
+assert.equal(rank('Father of Swords'), 0, 'court cards must not become pip cards')
+assert.equal(rank('Daughter of Cups'), 0)
+assert.equal(rank('The Fool'), 0, 'majors must not become pip cards')
+assert.equal(CARDS.filter(c => c.rank > 0).length, 40, 'exactly 40 numbered minors')
+// every suit runs Ace..Ten exactly once
+for (const s of ['wands', 'cups', 'swords', 'pentacles']) {
+  const ranks = CARDS.filter(c => c.suit === s && c.rank).map(c => c.rank).sort((a, b) => a - b)
+  assert.deepEqual(ranks, [1,2,3,4,5,6,7,8,9,10], `${s} must run Ace to Ten`)
+}
+
+// ── numerals: majors 0–XXI, pips I–X, courts none
+const num = n => CARDS.find(c => c.name === n).numeral
+assert.equal(num('The Fool'), '0')
+assert.equal(num('The Magician'), 'I')
+assert.equal(num('Wheel of Fortune'), 'X')
+assert.equal(num('Death'), 'XIII')
+assert.equal(num('The World'), 'XXI')
+assert.equal(num('Ace of Cups'), 'I')
+assert.equal(num('Ten of Pentacles'), 'X')
+assert.equal(num('Father of Swords'), '', 'court cards carry no number')
+assert.equal(CARDS.filter(c => !c.numeral).length, 16, 'only the 16 courts lack a numeral')
+// the majors must be numbered in deck order with no gaps or repeats
+assert.deepEqual(
+  CARDS.filter(c => c.suit === 'major').map(c => c.numeral),
+  ['0','I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV','XVI','XVII','XVIII','XIX','XX','XXI'])
+
 console.log('ok — tarot deck and lines')
 
 // ── companion chat: the window ai_chat accepts

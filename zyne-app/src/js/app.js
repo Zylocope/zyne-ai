@@ -704,11 +704,35 @@ const suitSvg = (suit, size) =>
   `<svg width="${size}" height="${size}" viewBox="0 0 40 40" fill="none" stroke="currentColor"
      stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${SUIT_MARK[suit] || SUIT_MARK.major}</svg>`
 
+// Pip cards: the count is a loop, never a drawing that has to be trusted.
+// Columns per rank — 4 as a square, 9 as three rows of three, 10 as two of
+// five, the way pip cards have always been laid out.
+const PIP_COLS = { 1: 1, 2: 2, 3: 3, 4: 2, 5: 3, 6: 3, 7: 3, 8: 4, 9: 3, 10: 5 }
+const pipSize = (rank, base) =>
+  Math.round(base * (rank === 1 ? 0.78 : rank <= 3 ? 0.52 : rank <= 6 ? 0.40 : 0.32))
+
+// The mark field: a pip grid for Ace–Ten, a single mark for everything else.
+// `base` is the width the single mark would have taken.
+function markField(card, base) {
+  if (!card.rank) return suitSvg(card.suit, base)
+  const size = pipSize(card.rank, base)
+  const pips = Array.from({ length: card.rank }, (_, i) => {
+    // deterministic tilt: the same card always sits the same way, but the
+    // grid never reads as stamped
+    const tilt = ((i * 37) % 11) - 5
+    return `<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.3"
+      stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+      style="width:${size}px;height:${size}px;transform:rotate(${tilt}deg)">${SUIT_MARK[card.suit]}</svg>`
+  }).join('')
+  return `<span class="pips" style="grid-template-columns:repeat(${PIP_COLS[card.rank]},auto)">${pips}</span>`
+}
+
 // Phone only. The laptop is for working, so the card stays off it.
 // In the Journal it is one compact row; tapping it opens the 3D stage
 // (card3d.js), where you pick, flip and tilt the card.
 const cardFace = card => `
-  <span class="tmark">${suitSvg(card.suit, 40)}</span>
+  ${card.numeral ? `<div class="tnum">${esc(card.numeral)}</div>` : ''}
+  <span class="tmark${card.rank ? ' has-pips' : ''}">${markField(card, 110)}</span>
   <div class="tname">${esc(card.name)}</div>
   <div class="timg">${esc(card.image)}</div>
   <div class="tkeys">${esc(card.keys)}</div>`

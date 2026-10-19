@@ -423,3 +423,21 @@ html.c3-open, html.c3-open body { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
   .c3-fan, .c3-read, .c3-stage { transition: none; }
 }
+
+/* ─── pip cards ────────────────────────────────────────────── */
+/* Ace–Ten repeat the suit mark instead of carrying a drawn count.
+   Inline width/height on each pip beats the .tmark svg sizing rule. */
+.pips { display: grid; place-content: center; gap: 3px 6px; }
+.pips svg { display: block; }
+.c3-front .tmark.has-pips { display: flex; align-items: center; justify-content: center; }
+
+/* ─── card numeral ─────────────────────────────────────────── */
+/* Majors 0–XXI, pips I–X. Courts carry none, so the element is absent
+   rather than empty — no reserved gap on the 16 cards without one. */
+.tnum {
+  font-family: "Instrument Serif", Georgia, serif;
+  font-size: 12px; line-height: 1; letter-spacing: .14em;
+  color: var(--muted); opacity: .75; margin-top: 2px;
+}
+/* sized against the card, which is min(62vw, 280px) wide */
+.c3-front .tnum { font-size: clamp(12px, 3.4vw, 15px); margin-top: 4px; }
