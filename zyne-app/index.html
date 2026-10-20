@@ -30,11 +30,7 @@
         </svg>
         <span>ZYNE<span style="color:#00c9a7;font-weight:300">.ai</span></span>
       </div>
-      <div class="feed-head-actions">
-        <button class="icon-btn" id="refreshBtn" onclick="refreshFeed()" title="Refresh" aria-label="Refresh feed">
-          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
-        </button>
-      </div>
+      
     </div>
 
     <!-- KIND FILTER CHIPS -->
@@ -53,11 +49,8 @@
   <!-- JOURNAL PAGE (bullet journal: events + tasks + notes per day) -->
   <div class="page" id="page-journal">
     <div class="page-header journal-head" data-tauri-drag-region>
-      <div>
-        <div class="journal-kicker">MY DAY</div>
-        <div class="page-title" id="selectedDateLabel">Today</div>
-        <div class="journal-date-sub" id="selectedDateSub"></div>
-      </div>
+      <div class="page-title" id="selectedDateLabel">Today</div>
+      <span id="selectedDateSub" hidden></span>
       <div class="journal-day-nav" aria-label="Choose journal day">
         <button onclick="dayStep(-1)" aria-label="Previous day">‹</button>
         <button class="journal-today-btn" onclick="jumpToToday()">Today</button>
@@ -80,8 +73,6 @@
         </div>
       </div>
 
-      <div id="daySummary" class="day-summary" aria-live="polite"></div>
-
       <!-- things you can do about right now: the timer, and two actions -->
       <div id="timerHostMobile"></div>
       <div id="dayActions" class="day-actions"></div>
@@ -93,13 +84,7 @@
 
     <!-- COMPOSER -->
     <div class="composer" aria-label="Add to journal">
-      <div class="composer-title-row">
-        <div>
-          <div class="composer-title">Add to this day</div>
-          <div class="composer-date" id="composerDate"></div>
-        </div>
-        <span class="composer-hint" id="composerHint">A task you want to finish</span>
-      </div>
+      <span id="composerDate" hidden></span><span id="composerHint" hidden></span>
       <div class="chip-row composer-chips">
         <button class="chip active" data-etype="task" onclick="setEntryType('task')">
           Task
@@ -275,7 +260,7 @@
       <div class="sp-head">
         <button class="sp-btn" id="spBack" onclick="settingsBack()" aria-label="Back">‹</button>
         <div class="sp-title" id="spTitle">Settings</div>
-        <button class="sp-btn" onclick="closeSettings()" aria-label="Close">×</button>
+        <button class="sp-btn" id="spClose" onclick="closeSettings()" aria-label="Close">×</button>
       </div>
       <div class="sp-body">
         <div class="sp-view" data-view="home">

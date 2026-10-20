@@ -242,14 +242,14 @@
 /* ─── JOURNAL ──────────────────────────────────────────────── */
 .journal-head {
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
-  padding-block: 14px;
+  padding-block: 9px;
 }
 .journal-kicker {
   margin-bottom: 3px; color: var(--learn); font-size: 9px; font-weight: 700;
   letter-spacing: 2.2px;
 }
 .journal-head .page-title {
-  font-family: Georgia, 'Instrument Serif', serif; font-size: clamp(25px, 4vw, 34px);
+  font-family: Georgia, 'Instrument Serif', serif; font-size: clamp(21px, 3.4vw, 26px);
   font-weight: 400; letter-spacing: -.5px; line-height: 1.05;
 }
 .journal-date-sub { margin-top: 4px; color: var(--muted); font-size: 11px; }

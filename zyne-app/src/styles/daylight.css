@@ -164,3 +164,10 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, [tabindex]:fo
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* feed.css gives this button --key-grad and #fff text, which in daylight is
+   white on near-white. Same specificity trick, so the primary colour wins. */
+#page-journal .task-add-btn {
+  background: var(--learn); border-color: var(--learn); color: #fff;
+  box-shadow: none; text-shadow: none;
+}

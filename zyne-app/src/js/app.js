@@ -412,7 +412,9 @@ async function openSettings(view = 'home') {
   if (view === 'sounds') document.getElementById('soundsText').value = soundsText
   panel.querySelectorAll('.sp-view').forEach(v => { v.hidden = v.dataset.view !== view })
   document.getElementById('spTitle').textContent = SP_TITLES[view] || 'Settings'
+  // one way out per screen: back inside a section, close only at the top
   document.getElementById('spBack').style.visibility = view === 'home' ? 'hidden' : ''
+  document.getElementById('spClose').style.visibility = view === 'home' ? '' : 'hidden'
   document.getElementById('spFoot').hidden = view === 'home'
   panel.querySelector('.sp-body').scrollTop = 0
   if (panel.hidden) {
@@ -537,12 +539,14 @@ function renderTimer() {
   }
 
   if (!timerRunning) {
-    timerHost.innerHTML = methodChipsHTML() +
-      `<div class="timer-wrap idle">
-        <button class="timer-plus" onclick="window.beginCompose()" aria-label="Start a session">+</button>
-        <div class="timer-idle-title">What would you like to focus on?</div>
-        <div class="timer-note">Choose one thing. Tap + to begin.</div>
-      </div>`
+    // idle is a row, not a stage: 346px of chips and hint kept the day
+    // below the fold. The rhythm chips come back the moment you start.
+    timerHost.innerHTML =
+      `<button class="timer-row" onclick="window.beginCompose()">
+        <span class="timer-row-plus" aria-hidden="true">+</span>
+        <span class="timer-row-label">Start a session</span>
+        <span class="timer-row-rhythm">${esc(focusCfg.name)}</span>
+      </button>`
     return
   }
 
@@ -693,8 +697,11 @@ function renderSoundChips() {
     .map(({ s, i }) =>
       `<button class="chip${i === lastLoopIndex ? ' active' : ''}" onclick="window.playSound(${i})">${esc(s.name)}${s.role === 'break' ? `<span class="chip-rhythm">${s.minutes ? `${s.minutes}m` : 'session'}</span>` : ''}</button>`
     ).join('')
-  host.innerHTML = chips ||
-    `<span class="composer-hint">No sounds yet — tap the gear to add YouTube links.</span>`
+  host.innerHTML = chips
+  // an empty sound bar spent 63px announcing it was empty; the gear in
+  // Settings is where sounds get added, so hide the bar until there are any
+  const bar = host.closest('.sound-bar')
+  if (bar) bar.hidden = !chips
   renderNightCard()
 }
 
