@@ -28,7 +28,7 @@ import {
 import { listWant, addWant, toggleWant, removeWant, saveIdea, buildNudges } from './library.js'
 import { CARDS, drawIndex, randomLine } from './tarot.js'
 import { openCardStage, closeCardStage } from './card3d.js'
-import { openGrounding, openCalm, openJar, openReflect, openTemperature, openGoals } from './tools.js'
+import { openGrounding, openGoals } from './tools.js'
 import { invoke } from '@tauri-apps/api/core'
 import { native, initStore, snapshot, chooseFile, saveFile } from './companion-store.js'
 import {
@@ -89,7 +89,6 @@ async function init() {
   bindInputs()
 
   try { await getDb() } catch (e) { console.warn('DB init skipped:', e) }
-  await loadMoods()
   // A damaged sync index must not stop the app; sync just reports it.
   try { await initStore() } catch (e) { console.warn('companion store:', e) }
   setSyncStatus(msg => { setStatus('syncStatus', msg); flashToast(msg) })
@@ -498,6 +497,11 @@ async function loadFocusSettings() {
     const slot = document.getElementById('focusSlot')
     const host = document.getElementById('timerHostMobile')
     if (slot && host) host.appendChild(slot)
+    // the card is the one thing worth opening the day with, so it leaves
+    // the slot and takes the top of the page; the timer and sounds stay put
+    const card = document.getElementById('dailyCard')
+    const cardHost = document.getElementById('cardHostMobile')
+    if (card && cardHost) cardHost.appendChild(card)
   }
   timerHost = document.getElementById('timerHost')
   renderSoundChips()
@@ -721,90 +725,30 @@ function markField(card, base) {
   </span>`
 }
 
-// ═════════════════════════════════════════════════════════════
-//  MOOD
-//  One tap a day. Words, not scores — a 1-to-5 rating invites you to
-//  chase a higher number, and a mood is not a performance. The month
-//  above tints itself so patterns show up without anyone counting
-//  anything at you. No streaks, by the same rule as the reading nudges.
-// ═════════════════════════════════════════════════════════════
-const MOODS = [
-  { key: 'rough',  label: 'Rough',  tone: 'var(--news)',    face: 'M14 25c1.6-2.2 3.6-3.3 6-3.3s4.4 1.1 6 3.3' },
-  { key: 'low',    label: 'Low',    tone: 'var(--skeptic)', face: 'M14 24h12' },
-  { key: 'okay',   label: 'Okay',   tone: 'var(--muted)',   face: 'M15 23.5c1.3.9 2.9 1.3 5 1.3s3.7-.4 5-1.3' },
-  { key: 'good',   label: 'Good',   tone: 'var(--learn)',   face: 'M13.5 22c1.8 2.6 4 3.9 6.5 3.9s4.7-1.3 6.5-3.9' },
-  { key: 'bright', label: 'Bright', tone: 'var(--pers)',    face: 'M13 21c1.2 3.6 3.6 5.4 7 5.4s5.8-1.8 7-5.4Z' },
-]
-let moodLog = {}                               // { '2026-10-20': 'good' }
-
-async function loadMoods() {
-  try { moodLog = JSON.parse((await getSetting('mood_log')) || '{}') } catch { moodLog = {} }
-}
-
-function renderMoodRow() {
-  const host = document.getElementById('moodRow')
-  if (!host) return
-  const iso = toISODate(calendarSelected)
-  const picked = moodLog[iso]
-  host.innerHTML = `<div class="j-section-label">HOW IS IT GOING</div>
-    <div class="mood-faces">${MOODS.map(m => `
-      <button class="mood-face${picked === m.key ? ' on' : ''}" style="--tone:${m.tone}"
-              onclick="window.setMood('${m.key}')"
-              aria-pressed="${picked === m.key}" aria-label="${m.label}">
-        <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.6"
-             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <circle cx="20" cy="20" r="14"/><circle cx="15" cy="16.5" r=".9" fill="currentColor"/>
-          <circle cx="25" cy="16.5" r=".9" fill="currentColor"/><path d="${m.face}"/>
-        </svg>
-        <span>${m.label}</span>
-      </button>`).join('')}</div>`
-}
-
-// Tapping the mood you already picked clears it — a wrong tap should not
-// be permanent, and nothing here is worth a confirm dialog.
-async function setMood(key) {
-  const iso = toISODate(calendarSelected)
-  const was = moodLog[iso]
-  if (was === key) delete moodLog[iso]; else moodLog[iso] = key
-  await setSetting('mood_log', JSON.stringify(moodLog))
-  renderMoodRow()
-  renderMiniMonth()
-  if (was === key) return
-  try {
-    await addEntry(iso, 'note', `Mood: ${MOODS.find(m => m.key === key).label.toLowerCase()}`)
-    await loadJournal()
-  } catch (e) { console.warn('log mood:', e) }
-}
-
-// The tool shelf. Each chip opens a small screen that closes again and
-// leaves nothing behind — none of these keep score.
-const TOOLS = [
-  { key: 'ground', name: '5·4·3·2·1', sub: 'come back to the room' },
-  { key: 'calm',   name: 'Calm',      sub: 'a moment of quiet' },
-  { key: 'jar',    name: 'Jar',       sub: 'keep a good moment' },
-  { key: 'reflect',name: 'Reflect',   sub: 'sort it out in five questions' },
-  { key: 'temp',   name: 'Looking back', sub: 'how the last month went' },
-  { key: 'goals',  name: 'Goals',     sub: 'borrow one for today' },
+// Two things you can do about right now, sitting with the timer rather
+// than in a shelf of their own. Icon first, one word — a button that needs
+// a sentence under it is a button with the wrong icon.
+const DAY_ACTIONS = [
+  { key: 'ground', label: 'Ground',
+    icon: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>' },
+  { key: 'goals', label: 'Goals',
+    icon: '<path d="M5 20V6a1 1 0 011-1h8l-1.5 3L14 11H6"/><circle cx="5" cy="20" r="1.4"/>' },
 ]
 
-function renderTools() {
-  const host = document.getElementById('toolsRow')
+function renderDayActions() {
+  const host = document.getElementById('dayActions')
   if (!host) return
-  host.innerHTML = TOOLS.map(t => `
-    <button class="tool-chip" onclick="window.openTool('${t.key}')">
-      <span class="tool-name">${esc(t.name)}</span>
-      <span class="tool-sub">${esc(t.sub)}</span>
+  host.innerHTML = DAY_ACTIONS.map(a => `
+    <button class="day-action" onclick="window.openDayAction('${a.key}')" aria-label="${a.label}">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${a.icon}</svg>
+      <span>${a.label}</span>
     </button>`).join('')
 }
 
-function openTool(key) {
+function openDayAction(key) {
   if (key === 'ground') openGrounding()
-  if (key === 'calm') openCalm()
-  if (key === 'jar') openJar()
-  // the opening line uses today's mood when there is one
-  if (key === 'temp') openTemperature(moodLog, MOODS)
   if (key === 'goals') openGoals(loadJournal)
-  if (key === 'reflect') openReflect(MOODS.find(m => m.key === moodLog[toISODate(calendarSelected)])?.label)
 }
 
 // Major arcana art, bundled and hashed by Vite. The filename is chosen at
@@ -1108,9 +1052,8 @@ async function loadJournal() {
   }
   renderMiniMonth()
   renderDayLog()
+  renderDayActions()
   renderDaySummary()
-  renderMoodRow()
-  renderTools()
   updateDateLabel()
 }
 
@@ -1344,12 +1287,8 @@ function renderMiniMonth() {
     if (!c.inMonth) classes.push('other-month')
     if (c.iso === todayISO) classes.push('today')
     if (c.iso === selISO) classes.push('selected')
-    // a day you logged carries its mood as a wash behind the number
-    const mood = moodLog[c.iso]
-    if (mood) classes.push('has-mood')
-    const tone = mood ? MOODS.find(m => m.key === mood)?.tone : null
     return `
-      <div class="${classes.join(' ')}" data-iso="${c.iso}"${tone ? ` style="--tone:${tone}"` : ''} onclick="window.selectCalendarDate('${c.iso}')">
+      <div class="${classes.join(' ')}" data-iso="${c.iso}" onclick="window.selectCalendarDate('${c.iso}')">
         ${c.date.getDate()}
         ${busy.has(c.iso) ? '<div class="mm-dot"></div>' : ''}
       </div>`
@@ -1837,10 +1776,8 @@ Object.assign(window, {
   beginCompose, startSession, stopSession, skipPhase, setMethod,
   toggleFocusSettings,
   playSound, stopSound, openExternal, playNight, toggleNightDone,
-  // Mood
-  setMood,
-  // Tools
-  openTool,
+  // Tools — opened straight from the day
+  openDayAction,
   // Daily card
   drawDailyCard, shuffleLine, openDailyCard, keepIfThen,
   // Library

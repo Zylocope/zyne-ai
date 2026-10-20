@@ -501,34 +501,10 @@ html.c3-open, html.c3-open body { overflow: hidden; }
   .tart img, .minor-bg { transform: none; }
 }
 
-/* ─── mood ─────────────────────────────────────────────────── */
-.mood-row { margin: 0 0 14px; }
-.mood-faces { display: flex; gap: 6px; }
-.mood-face {
-  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;
-  padding: 9px 2px 8px; border-radius: 13px; cursor: pointer;
-  background: var(--surface); border: 1px solid var(--border);
-  color: var(--muted); font: inherit; font-size: 9px; letter-spacing: .05em;
-  transition: border-color .2s, color .2s, transform .15s;
-}
-.mood-face svg { width: 26px; height: 26px; }
-.mood-face:active { transform: translateY(1px); }
-.mood-face.on { color: var(--tone); border-color: var(--tone); background: color-mix(in srgb, var(--tone) 9%, var(--surface)); }
 /* a logged day wears its mood behind the number, so a month reads at a glance */
 .mm-cell.has-mood { background: color-mix(in srgb, var(--tone) 22%, transparent); }
-@media (prefers-reduced-motion: reduce) { .mood-face { transition: none; } }
 
 /* ─── tool shelf + the screens it opens ────────────────────── */
-.tools-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 14px; }
-.tool-chip {
-  flex: 1; min-width: 130px; text-align: left; cursor: pointer; font: inherit;
-  padding: 11px 13px; border-radius: 13px;
-  background: var(--surface); border: 1px solid var(--border); color: var(--text);
-  display: flex; flex-direction: column; gap: 2px;
-}
-.tool-chip:active { transform: translateY(1px); }
-.tool-name { font-size: 13px; }
-.tool-sub { font-size: 10px; color: var(--muted); letter-spacing: .03em; }
 
 html.tool-open, html.tool-open body { overflow: hidden; }
 .tool-stage {
@@ -566,80 +542,6 @@ html.tool-open, html.tool-open body { overflow: hidden; }
   .g-card { opacity: 1; transform: none; }
 }
 
-/* Calm — a screen with nothing to do */
-.tool-calm .tool-body { max-width: 300px; }
-.c-orb {
-  width: 140px; height: 140px; margin: 0 auto 34px; border-radius: 50%;
-  background: radial-gradient(circle at 42% 38%, #cfe0c84d, #cfe0c80d 62%, transparent 72%);
-  border: 1px solid #cfe0c826; animation: c-breathe 11s ease-in-out infinite;
-}
-@keyframes c-breathe { 0%, 100% { transform: scale(.88); opacity: .72 } 50% { transform: scale(1.06); opacity: 1 } }
-.c-line {
-  display: block; width: 100%; cursor: pointer; background: none; border: 0; padding: 0;
-  font-family: "Instrument Serif", Georgia, serif; font-style: italic;
-  font-size: clamp(19px, 5.4vw, 24px); line-height: 1.5; color: #f3efe2;
-  opacity: 0; transition: opacity .5s;
-}
-.c-line.in { opacity: 1; }
-.c-who { font-style: normal; font-size: 11px; opacity: .6; white-space: nowrap; }
-.c-hint { margin-top: 30px; font-size: 10px; letter-spacing: .1em; color: #cfe0c870; }
-@media (prefers-reduced-motion: reduce) {
-  .c-orb { animation: none; }
-  .c-line { transition: none; opacity: 1; }
-}
-
-/* The jar — good moments, kept */
-.tool-jar .tool-body { max-width: 320px; }
-.jar-glass {
-  width: 110px; height: 132px; margin: 0 auto 20px; position: relative;
-  border: 1px solid #cfe0c840; border-radius: 10px 10px 26px 26px;
-  background: linear-gradient(to top, #cfe0c81f, transparent 62%);
-  display: flex; align-items: flex-end; justify-content: center; padding-bottom: 16px;
-}
-.jar-glass::before { /* lid */
-  content: ""; position: absolute; top: -9px; left: 18px; right: 18px; height: 9px;
-  border: 1px solid #cfe0c840; border-radius: 4px 4px 0 0; background: #cfe0c81a;
-}
-.jar-glass span { font-family: "Instrument Serif", Georgia, serif; font-size: 34px; color: #cfe0c8; }
-.jar-pulled { min-height: 62px; margin-bottom: 16px; }
-.jar-note {
-  font-family: "Instrument Serif", Georgia, serif; font-size: 17px; line-height: 1.5;
-  color: #f3efe2; opacity: 0; transform: translateY(6px); transition: opacity .4s, transform .4s;
-}
-.jar-note.in { opacity: 1; transform: none; }
-.jar-empty { color: #cfe0c870; font-size: 15px; }
-.jar-when { display: block; font-family: inherit; font-size: 9px; letter-spacing: .1em; color: #cfe0c870; margin-bottom: 5px; }
-.jar-add { display: flex; gap: 8px; }
-.jar-add .input-field { flex: 1; min-width: 0; }
-.jar-pull {
-  margin-top: 16px; background: none; border: 0; cursor: pointer; font: inherit;
-  font-size: 11px; letter-spacing: .1em; color: #cfe0c8a0; text-transform: uppercase;
-}
-@media (prefers-reduced-motion: reduce) { .jar-note { transition: none; opacity: 1; transform: none; } }
-
-/* Reflection — same stepper, different questions */
-.r-opening { margin-bottom: 18px; opacity: .8; }
-.r-q { font-size: clamp(22px, 6vw, 28px); }
-.r-keep { margin-top: 26px; }
-
-/* Looking back — a month of moods, and what was going on */
-.tool-temp .tool-body { max-width: 330px; }
-.t-head { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: #cfe0c8a0; margin-bottom: 16px; }
-.t-strip { display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px; }
-.t-day {
-  aspect-ratio: 1; border-radius: 4px; cursor: pointer; padding: 0;
-  border: 1px solid #ffffff1f; background: #ffffff0d;
-}
-.t-day.on { background: color-mix(in srgb, var(--tone) 62%, transparent); border-color: transparent; }
-.t-day.sel { outline: 2px solid #f3efe2; outline-offset: 1px; }
-.t-sum { margin-top: 16px; font-family: "Instrument Serif", Georgia, serif; font-size: 17px; color: #f3efe2; }
-.t-detail { margin-top: 20px; min-height: 84px; text-align: left; }
-.t-date { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: #cfe0c8a0; margin-bottom: 8px; }
-.t-notes { list-style: none; display: flex; flex-direction: column; gap: 6px; }
-.t-notes li { font-size: 13px; line-height: 1.5; color: #f3efe2; padding-left: 12px; position: relative; }
-.t-notes li::before { content: "·"; position: absolute; left: 2px; color: #cfe0c870; }
-.t-hint { font-size: 12px; color: #cfe0c870; line-height: 1.6; }
-
 /* Borrowed goals */
 .tool-goals .tool-body { max-width: 340px; max-height: 76vh; overflow-y: auto; }
 .goal-groups { display: flex; flex-direction: column; gap: 18px; text-align: left; }
@@ -654,3 +556,18 @@ html.tool-open, html.tool-open body { overflow: hidden; }
 .goal.added { color: #cfe0c8a0; border-color: transparent; background: #cfe0c814; cursor: default; }
 .goal.added i { border-color: #cfe0c8; background: #cfe0c8; }
 @media (prefers-reduced-motion: reduce) { .goal { transition: none; } }
+
+/* ─── day actions ──────────────────────────────────────────── */
+/* Icon first, one word. Sits with the timer because these are all
+   "things I can do about right now", not places to go. */
+.day-actions { display: flex; gap: 8px; margin: 10px 0 16px; }
+.day-action {
+  flex: 1; min-height: 56px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 5px; cursor: pointer;
+  border-radius: 14px; border: 1px solid var(--border); background: var(--surface);
+  color: var(--text); font: inherit; font-size: 11px; letter-spacing: .04em;
+  transition: transform .15s ease-out, border-color .2s;
+}
+.day-action svg { color: var(--muted); }
+.day-action:active { transform: scale(.97); border-color: var(--border2); }
+@media (prefers-reduced-motion: reduce) { .day-action { transition: none; } }

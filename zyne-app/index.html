@@ -31,9 +31,6 @@
         <span>ZYNE<span style="color:#00c9a7;font-weight:300">.ai</span></span>
       </div>
       <div class="feed-head-actions">
-        <button class="icon-btn" onclick="toggleSettings()" title="Settings" aria-label="Settings">
-          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33h.01a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51h.01a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v.01a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-        </button>
         <button class="icon-btn" id="refreshBtn" onclick="refreshFeed()" title="Refresh" aria-label="Refresh feed">
           <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
         </button>
@@ -46,12 +43,10 @@
       <button class="chip" data-kind="video" onclick="setKindFilter('video')">Videos</button>
       <button class="chip" data-kind="article" onclick="setKindFilter('article')">Articles</button>
       <button class="chip" data-kind="post" onclick="setKindFilter('post')">Community</button>
-      <button class="chip" data-kind="showcase" onclick="setKindFilter('showcase')">Showcase</button>
-      <button class="chip" data-kind="idea" onclick="setKindFilter('idea')">Books</button>
     </div>
 
     <div class="scroll-area" id="feedList">
-      <div class="feed-status" id="feedStatus">Loading feed…</div>
+      <div class="feed-status" id="feedStatus" hidden></div>
     </div>
   </div>
 
@@ -71,6 +66,9 @@
     </div>
     <div class="scroll-area" id="journalScroll">
 
+      <!-- the card opens the day, so it sits above everything else -->
+      <div id="cardHostMobile"></div>
+
       <div class="card collapsed" id="miniMonthCard">
         <div class="section-head" onclick="this.parentElement.classList.toggle('collapsed')">
           <div class="section-accent" style="background:var(--pers)"></div>
@@ -84,14 +82,9 @@
 
       <div id="daySummary" class="day-summary" aria-live="polite"></div>
 
-      <!-- one tap a day; tints the month above so patterns show themselves -->
-      <div id="moodRow" class="mood-row"></div>
-
-      <!-- small self-care screens that open over everything and close again -->
-      <div id="toolsRow" class="tools-row"></div>
-
-      <!-- on phones the Focus timer is moved in here, replacing Activity Tap -->
+      <!-- things you can do about right now: the timer, and two actions -->
       <div id="timerHostMobile"></div>
+      <div id="dayActions" class="day-actions"></div>
 
       <!-- DAY LOG -->
       <div id="dayLog"></div>
@@ -371,9 +364,9 @@
       <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/><line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="15" y2="11"/></svg>
       <span class="nav-label">Journal</span>
     </button>
-    <button class="nav-item" id="nav-companion" onclick="switchPage('companion')">
-      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="4" width="13" height="10" rx="1"/><line x1="5" y1="18" x2="12" y2="18"/><rect x="16" y="8" width="6" height="12" rx="1"/></svg>
-      <span class="nav-label">Companion</span>
+    <button class="nav-item" id="nav-settings" onclick="openSettings()">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33h.01a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51h.01a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v.01a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      <span class="nav-label">Settings</span>
     </button>
   </nav>
 
