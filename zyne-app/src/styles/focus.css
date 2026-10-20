@@ -424,12 +424,51 @@ html.c3-open, html.c3-open body { overflow: hidden; }
   .c3-fan, .c3-read, .c3-stage { transition: none; }
 }
 
-/* ─── pip cards ────────────────────────────────────────────── */
-/* Ace–Ten repeat the suit mark instead of carrying a drawn count.
-   Inline width/height on each pip beats the .tmark svg sizing rule. */
-.pips { display: grid; place-content: center; gap: 3px 6px; }
-.pips svg { display: block; }
-.c3-front .tmark.has-pips { display: flex; align-items: center; justify-content: center; }
+/* ─── minor arcana landscapes ──────────────────────────────── */
+/* The count remains literal, but it now sits in an elemental world. The
+   scene moves a fraction against the frame as the phone/card tilts. */
+.c3-front .tmark.has-pips,
+.c3-front .tmark:has(.minor-art) {
+  width: 100%; display: flex; align-items: stretch; justify-content: stretch;
+}
+.minor-art {
+  --ink: #9d4a27; --deep: #692b1d; --light: #f5b34f; --wash: #f8dfb3;
+  position: relative; isolation: isolate; display: grid; place-items: center;
+  width: 100%; height: 100%; min-height: 0; overflow: hidden;
+  border-radius: 8px; color: var(--ink);
+  background:
+    radial-gradient(circle at 50% 34%, color-mix(in srgb, var(--light) 60%, transparent), transparent 43%),
+    linear-gradient(180deg, color-mix(in srgb, var(--wash) 86%, #fff) 0%, #fffaf0 58%, color-mix(in srgb, var(--wash) 72%, #fff) 100%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 22%, transparent);
+}
+.minor-art.cups { --ink:#297a78; --deep:#174b5a; --light:#78d9d3; --wash:#cdecea; }
+.minor-art.swords { --ink:#4e638c; --deep:#293b65; --light:#aabce0; --wash:#dae2f2; }
+.minor-art.pentacles { --ink:#8a681d; --deep:#4d5528; --light:#d7b64f; --wash:#e9e1b7; }
+.minor-bg {
+  position: absolute; inset: -4%; z-index: 0; width: 108%; height: 108%; object-fit: cover;
+  transform: translate3d(calc(var(--px, 0px) * -.45), calc(var(--py, 0px) * -.45), 0) scale(1.035);
+  filter: saturate(.92) contrast(.94) brightness(.83); will-change: transform; pointer-events: none;
+}
+.minor-art.cups .minor-bg { filter: saturate(.9) contrast(.97) brightness(.78); }
+.minor-art.swords .minor-bg { filter: saturate(.72) contrast(.9) brightness(.91); }
+.minor-art.pentacles .minor-bg { filter: saturate(.88) contrast(.94) brightness(.82); }
+.minor-art::after {
+  content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: linear-gradient(180deg, rgba(20,15,9,.04), transparent 24% 76%, rgba(20,15,9,.1));
+}
+.c3-card[data-suit="wands"] .c3-front,
+.c3-card[data-suit="cups"] .c3-front,
+.c3-card[data-suit="swords"] .c3-front,
+.c3-card[data-suit="pentacles"] .c3-front { background: #fbf8ee; }
+.c3-card:not([data-suit="major"]) .c3-front .c3-sheen {
+  opacity: .62; mix-blend-mode: overlay;
+  background:
+    radial-gradient(circle at var(--sx) var(--sy), #fff 0%, transparent 48%),
+    linear-gradient(118deg, transparent 25%, #fff8 43%, transparent 58%);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .c3-card:not([data-suit="major"]) .minor-bg { transition: filter .45s ease; }
+}
 
 /* ─── card numeral ─────────────────────────────────────────── */
 /* Majors 0–XXI, pips I–X. Courts carry none, so the element is absent
@@ -459,7 +498,7 @@ html.c3-open, html.c3-open body { overflow: hidden; }
    be a third nested frame — drop it */
 .c3-front:has(.tart)::before { display: none; }
 @media (prefers-reduced-motion: reduce) {
-  .tart img { transform: none; }
+  .tart img, .minor-bg { transform: none; }
 }
 
 /* ─── mood ─────────────────────────────────────────────────── */

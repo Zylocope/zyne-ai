@@ -72,6 +72,26 @@ zyne-app/
 
 ## Rules that came from the user — don't undo these
 
+### UI ownership contract
+
+Claude owns implementation and makes the functions reliable. Codex owns the
+product UI/UX and adapts the interface after functions change. When adding a
+feature, preserve stable ids and callable functions, but do not assume its
+first HTML placement or developer-facing copy is the final user experience.
+
+- Design from the user's next decision, not from the storage or API structure.
+- Every visible control needs a plain-language label or an immediately clear
+  context. Tooltips and undocumented icons are not the primary explanation.
+- Group related capabilities under a human goal such as “Connect devices” or
+  “Save a backup”; avoid presenting several internal systems at equal weight.
+- The first screen state must explain what can be done without setup knowledge.
+- Keep advanced settings and file/API details available, but one level below
+  the primary action.
+- Preserve the warm daylight visual language, comfortable touch targets, and
+  responsive behavior on both phone and laptop.
+- After UI changes, run the self-check and production web build. Do not change
+  working feature behavior just to achieve a visual layout.
+
 - **No data entry.** Books are saved by name from a card, never typed into a
   form. An earlier version asked for author, page count and a "why" paragraph
   and was rejected outright: *"are you making quiz just to read?"*

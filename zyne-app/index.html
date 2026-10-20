@@ -57,9 +57,17 @@
 
   <!-- JOURNAL PAGE (bullet journal: events + tasks + notes per day) -->
   <div class="page" id="page-journal">
-    <div class="page-header feed-head" style="display: flex; justify-content: space-between; align-items: center;" data-tauri-drag-region>
-      <div class="page-title">JOURNAL <span id="selectedDateLabel" class="journal-date-label"></span></div>
-      <div id="clockDisplay" class="clock-pill"></div>
+    <div class="page-header journal-head" data-tauri-drag-region>
+      <div>
+        <div class="journal-kicker">MY DAY</div>
+        <div class="page-title" id="selectedDateLabel">Today</div>
+        <div class="journal-date-sub" id="selectedDateSub"></div>
+      </div>
+      <div class="journal-day-nav" aria-label="Choose journal day">
+        <button onclick="dayStep(-1)" aria-label="Previous day">‹</button>
+        <button class="journal-today-btn" onclick="jumpToToday()">Today</button>
+        <button onclick="dayStep(1)" aria-label="Next day">›</button>
+      </div>
     </div>
     <div class="scroll-area" id="journalScroll">
 
@@ -73,6 +81,8 @@
           <div id="miniMonth"></div>
         </div>
       </div>
+
+      <div id="daySummary" class="day-summary" aria-live="polite"></div>
 
       <!-- one tap a day; tints the month above so patterns show themselves -->
       <div id="moodRow" class="mood-row"></div>
@@ -89,23 +99,29 @@
     </div>
 
     <!-- COMPOSER -->
-    <div class="composer">
+    <div class="composer" aria-label="Add to journal">
+      <div class="composer-title-row">
+        <div>
+          <div class="composer-title">Add to this day</div>
+          <div class="composer-date" id="composerDate"></div>
+        </div>
+        <span class="composer-hint" id="composerHint">A task you want to finish</span>
+      </div>
       <div class="chip-row composer-chips">
         <button class="chip active" data-etype="task" onclick="setEntryType('task')">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="5"/></svg> Task
+          Task
         </button>
         <button class="chip" data-etype="note" onclick="setEntryType('note')">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/></svg> Note
+          Note
         </button>
         <button class="chip" data-etype="event" onclick="setEntryType('event')">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><circle cx="12" cy="12" r="8"/></svg> Event
+          Event
         </button>
-        <span class="composer-hint" id="composerHint">saved to journal md</span>
       </div>
       <div class="composer-event-fields" id="eventFields" style="display:none">
-        <input class="input-field" id="schedTime" type="time" value="09:00" aria-label="Event time">
-        <input class="input-field" id="schedDur" type="number" value="30" min="5" aria-label="Duration minutes" placeholder="Min">
-        <select class="input-field" id="schedRecur" aria-label="Recurrence">
+        <label><span>Starts</span><input class="input-field" id="schedTime" type="time" value="09:00"></label>
+        <label><span>Minutes</span><input class="input-field" id="schedDur" type="number" value="30" min="5" placeholder="30"></label>
+        <label><span>Repeats</span><select class="input-field" id="schedRecur">
           <option value="once">One-time</option>
           <option value="daily">Every day</option>
           <option value="weekdays">Weekdays</option>
@@ -116,20 +132,18 @@
           <option value="weekly:5">Fridays</option>
           <option value="weekly:1,3,5">Mon·Wed·Fri</option>
           <option value="weekly:0,6">Weekends</option>
-        </select>
-        <select class="input-field" id="schedNotify" aria-label="Reminder">
+        </select></label>
+        <label><span>Reminder</span><select class="input-field" id="schedNotify">
           <option value="0">No alert</option>
           <option value="5">5m before</option>
           <option value="15">15m before</option>
           <option value="30">30m before</option>
           <option value="60">1h before</option>
-        </select>
+        </select></label>
       </div>
       <div class="task-input-row" style="border-top:none;padding-top:0">
         <input class="input-field" id="entryInput" placeholder="Add a task…" style="flex:1">
-        <button class="task-add-btn" onclick="submitEntry()" aria-label="Add entry">
-          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        </button>
+        <button class="task-add-btn" id="entrySubmit" onclick="submitEntry()">Add task</button>
       </div>
     </div>
   </div>
@@ -202,47 +216,62 @@
 
   <!-- COMPANION PAGE (both platforms: the laptop hosts a pairing, the phone joins it) -->
   <div class="page" id="page-companion">
-    <div class="page-header feed-head" data-tauri-drag-region>
-      <div class="page-title">COMPANION</div>
+    <div class="page-header companion-head" data-tauri-drag-region>
+      <div>
+        <div class="page-title">Companion</div>
+        <div class="page-subtitle">Connect your devices, protect your memories, and choose whether to use AI.</div>
+      </div>
     </div>
 
     <div class="scroll-area" id="companionScroll">
-      <div class="j-section-label">SYNC</div>
-      <div class="feed-sheet desktop-only">
-        <label class="sheet-label" for="pairCode">Pair with your phone <span class="sheet-sub">— same Wi-Fi only. Start here, then scan the QR with Companion → Scan QR on your phone. Pairing stops by itself after 30 minutes.</span></label>
-        <div class="pair-qr" id="pairQr" hidden></div>
-        <input class="input-field" id="pairCode" readonly placeholder="No pairing running" onclick="this.select()">
-        <div class="companion-actions">
-          <button class="btn-primary" style="font-size:13px;padding:10px" id="pairStartBtn" onclick="startPairing()">START PAIRING</button>
-          <button class="btn-mini" onclick="copyPairCode()">COPY CODE</button>
-          <button class="btn-mini" onclick="stopPairing()">STOP</button>
-        </div>
-      </div>
-      <div class="feed-sheet mobile-only">
-        <label class="sheet-label" for="joinCode">Sync with your laptop <span class="sheet-sub">— on the laptop open Companion → Start pairing, then scan the QR it shows. Same Wi-Fi only.</span></label>
-        <button class="btn-primary" style="font-size:14px;padding:12px" id="scanBtn" onclick="scanPairCode()">SCAN QR</button>
-        <details class="pair-manual"><summary>Or paste the code</summary>
-          <input class="input-field" id="joinCode" placeholder="192.168.…#…" autocomplete="off" autocapitalize="off" spellcheck="false">
-          <button class="btn-mini" id="joinBtn" onclick="joinPairing()">SYNC NOW</button>
-        </details>
-      </div>
-      <div class="composer-hint" id="syncStatus" role="status"></div>
-      <div id="conflictList"></div>
+      <div class="companion-grid">
+        <section class="companion-card companion-sync">
+          <div class="companion-step">CONNECT</div>
+          <h2>Keep phone and laptop together</h2>
+          <p>Both devices stay local. Put them on the same Wi-Fi, then pair when you want to copy your latest changes.</p>
+          <div class="desktop-only companion-device-flow">
+            <div class="pair-qr" id="pairQr" hidden></div>
+            <input class="input-field" id="pairCode" readonly placeholder="Pairing has not started" onclick="this.select()" aria-label="Pairing code">
+            <div class="companion-actions">
+              <button class="btn-primary" id="pairStartBtn" onclick="startPairing()">Show phone pairing code</button>
+              <button class="btn-mini" onclick="copyPairCode()">Copy code</button>
+              <button class="btn-mini" onclick="stopPairing()">Stop</button>
+            </div>
+          </div>
+          <div class="mobile-only companion-device-flow">
+            <button class="btn-primary" id="scanBtn" onclick="scanPairCode()">Scan laptop code</button>
+            <details class="pair-manual"><summary>Enter the code instead</summary>
+              <input class="input-field" id="joinCode" placeholder="Paste the pairing code" autocomplete="off" autocapitalize="off" spellcheck="false">
+              <button class="btn-mini" id="joinBtn" onclick="joinPairing()">Sync now</button>
+            </details>
+          </div>
+          <div class="companion-status" id="syncStatus" role="status"></div>
+          <div id="conflictList"></div>
+        </section>
 
-      <div class="j-section-label">BACKUP</div>
-      <div class="feed-sheet">
-        <label class="sheet-label" for="backupPassword">Encrypted backup <span class="sheet-sub">— journal, reading list, ideas, clips and schedule in one file, sealed with this password. Without the password the file can't be opened, by you or anyone.</span></label>
-        <input class="input-field" id="backupPassword" type="password" placeholder="Password, 8+ characters" autocomplete="new-password">
-        <div class="companion-actions">
-          <button class="btn-primary" style="font-size:13px;padding:10px" onclick="exportBackupFile()">EXPORT</button>
-          <button class="btn-mini" onclick="importBackupFile()">IMPORT A BACKUP</button>
-        </div>
-        <div class="composer-hint" id="backupStatus" role="status"></div>
-      </div>
+        <section class="companion-card companion-backup">
+          <div class="companion-step">PROTECT</div>
+          <h2>Make a private backup</h2>
+          <p>Save your journal, schedule, books, ideas, and clips in one encrypted file. You will need this password to restore it.</p>
+          <label class="companion-field" for="backupPassword">
+            <span>Backup password</span>
+            <input class="input-field" id="backupPassword" type="password" placeholder="At least 8 characters" autocomplete="new-password">
+          </label>
+          <div class="companion-actions">
+            <button class="btn-primary" onclick="exportBackupFile()">Save a backup</button>
+            <button class="btn-mini" onclick="importBackupFile()">Restore from file</button>
+          </div>
+          <div class="companion-status" id="backupStatus" role="status"></div>
+        </section>
 
-      <div class="j-section-label">GEMINI CHAT</div>
-      <div id="aiPanel" class="feed-sheet"></div>
-      <div class="composer-hint" id="aiStatus" role="status"></div>
+        <section class="companion-card companion-ai">
+          <div class="companion-step">OPTIONAL</div>
+          <h2>AI coach</h2>
+          <p>Gemini can help choose a next step and chat about your day. It remains off until you add a key and enable it.</p>
+          <div id="aiPanel"></div>
+          <div class="companion-status" id="aiStatus" role="status"></div>
+        </section>
+      </div>
     </div>
   </div>
 

@@ -37,6 +37,12 @@ import {
 } from './companion-sync.js'
 import { chatWindow } from './companion-model.js'
 import { buildContext, parseSuggestion, dueNudge, buildLensContext, parseLens, localLens } from './coach.js'
+import wandsArt from '../assets/tarot-minor/wands.jpg'
+import cupsArt from '../assets/tarot-minor/cups.jpg'
+import swordsArt from '../assets/tarot-minor/swords.jpg'
+import pentaclesArt from '../assets/tarot-minor/pentacles.jpg'
+
+const MINOR_ART = { wands: wandsArt, cups: cupsArt, swords: swordsArt, pentacles: pentaclesArt }
 
 // ─── STATE ───────────────────────────────────────────────────
 let feedItems = []                             // current unseen batch
@@ -706,27 +712,13 @@ const suitSvg = (suit, size) =>
   `<svg width="${size}" height="${size}" viewBox="0 0 40 40" fill="none" stroke="currentColor"
      stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${SUIT_MARK[suit] || SUIT_MARK.major}</svg>`
 
-// Pip cards: the count is a loop, never a drawing that has to be trusted.
-// Columns per rank — 4 as a square, 9 as three rows of three, 10 as two of
-// five, the way pip cards have always been laid out.
-const PIP_COLS = { 1: 1, 2: 2, 3: 3, 4: 2, 5: 3, 6: 3, 7: 3, 8: 4, 9: 3, 10: 5 }
-const pipSize = (rank, base) =>
-  Math.round(base * (rank === 1 ? 0.78 : rank <= 3 ? 0.52 : rank <= 6 ? 0.40 : 0.32))
-
-// The mark field: a pip grid for Ace–Ten, a single mark for everything else.
-// `base` is the width the single mark would have taken.
+// Major cards keep their traditional mark. Minor cards use their elemental
+// artwork directly; the card title and numeral carry the identity.
 function markField(card, base) {
-  if (!card.rank) return suitSvg(card.suit, base)
-  const size = pipSize(card.rank, base)
-  const pips = Array.from({ length: card.rank }, (_, i) => {
-    // deterministic tilt: the same card always sits the same way, but the
-    // grid never reads as stamped
-    const tilt = ((i * 37) % 11) - 5
-    return `<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.3"
-      stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
-      style="width:${size}px;height:${size}px;transform:rotate(${tilt}deg)">${SUIT_MARK[card.suit]}</svg>`
-  }).join('')
-  return `<span class="pips" style="grid-template-columns:repeat(${PIP_COLS[card.rank]},auto)">${pips}</span>`
+  if (card.suit === 'major') return suitSvg(card.suit, base)
+  return `<span class="minor-art ${card.suit}">
+    <img class="minor-bg" src="${MINOR_ART[card.suit]}" alt="" draggable="false">
+  </span>`
 }
 
 // ═════════════════════════════════════════════════════════════
@@ -1116,6 +1108,7 @@ async function loadJournal() {
   }
   renderMiniMonth()
   renderDayLog()
+  renderDaySummary()
   renderMoodRow()
   renderTools()
   updateDateLabel()
@@ -1126,9 +1119,16 @@ function updateDateLabel() {
   if (!el) return
   const d = calendarSelected
   const isToday = toISODate(d) === toISODate(new Date())
-  const names = ['SUN','MON','TUE','WED','THU','FRI','SAT']
-  const monthNames = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC']
-  el.textContent = `${names[d.getDay()]} · ${monthNames[d.getMonth()]} ${d.getDate()}${isToday ? ' · TODAY' : ''}`
+  const isTomorrow = toISODate(d) === toISODate(new Date(Date.now() + 86400000))
+  const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1)
+  const isYesterday = toISODate(d) === toISODate(yesterday)
+  el.textContent = isToday ? 'Today' : isTomorrow ? 'Tomorrow' : isYesterday ? 'Yesterday'
+    : d.toLocaleDateString(undefined, { weekday: 'long' })
+  const fullDate = d.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })
+  const sub = document.getElementById('selectedDateSub')
+  if (sub) sub.textContent = fullDate
+  const composerDate = document.getElementById('composerDate')
+  if (composerDate) composerDate.textContent = isToday ? 'Today' : fullDate
 }
 
 // ─── DAY LOG ────────────────────────────────────────────────
@@ -1154,7 +1154,7 @@ function eventRowHTML(it) {
         <div class="j-title">${esc(it.name)}</div>
         <div class="j-meta">until ${esc(end)}${recur}${notify}</div>
       </div>
-      <button class="j-act j-del" onclick="window.eventDelete('${it.id}')" aria-label="Delete event">${BULLET.del}</button>
+      <button class="j-act j-del" onclick="window.eventDelete('${it.id}')" aria-label="Delete event">Delete</button>
     </div>`
 }
 
@@ -1165,7 +1165,7 @@ function taskRowHTML(e) {
       <div class="j-row j-note">
         <span class="j-bullet">${BULLET.note}</span>
         <div class="j-text"><div class="j-title">${esc(e.text)}</div></div>
-        <button class="j-act j-del" onclick="window.journalDelete(${e.lineIdx})" aria-label="Delete note">${BULLET.del}</button>
+        <button class="j-act j-del" onclick="window.journalDelete(${e.lineIdx})" aria-label="Delete note">Delete</button>
       </div>`
   }
   const done = e.state === 'done'
@@ -1181,9 +1181,9 @@ function taskRowHTML(e) {
         ${stateLabel}
       </div>
       ${e.state === 'open' ? `
-        <button class="j-act" onclick="window.journalMigrate(${e.lineIdx})" title="Move to tomorrow" aria-label="Move task to tomorrow">${BULLET.migrated}</button>
-        <button class="j-act" onclick="window.journalSkip(${e.lineIdx})" title="Skip" aria-label="Skip task">${BULLET.skip}</button>` : ''}
-      <button class="j-act j-del" onclick="window.journalDelete(${e.lineIdx})" aria-label="Delete task">${BULLET.del}</button>
+        <button class="j-act" onclick="window.journalMigrate(${e.lineIdx})">Tomorrow</button>
+        <button class="j-act" onclick="window.journalSkip(${e.lineIdx})">Skip</button>` : ''}
+      <button class="j-act j-del" onclick="window.journalDelete(${e.lineIdx})" aria-label="Delete task">Delete</button>
     </div>`
 }
 
@@ -1203,9 +1203,36 @@ function renderDayLog() {
   if (closed.length) html += `<div class="j-section-label">LOGGED</div>` + closed.map(taskRowHTML).join('')
 
   if (!html) {
-    html = `<div class="feed-status">Empty day. Add a task, note, or timed event below.<br><span style="font-size:10px">Tasks &amp; notes land in Documents/ZyneVault/journal/ as markdown — Obsidian-ready.</span></div>`
+    html = `<div class="journal-empty">
+      <div class="journal-empty-mark">✦</div>
+      <div class="journal-empty-title">A clear day</div>
+      <p>What would make this day feel meaningful?</p>
+      <div class="journal-empty-actions">
+        <button onclick="window.startJournalEntry('task')">Plan a task</button>
+        <button onclick="window.startJournalEntry('note')">Write a thought</button>
+        <button onclick="window.startJournalEntry('event')">Schedule time</button>
+      </div>
+    </div>`
   }
   host.innerHTML = html
+}
+
+function renderDaySummary() {
+  const host = document.getElementById('daySummary')
+  if (!host) return
+  const events = itemsForDate(calendarItems, calendarSelected).length
+  const tasks = journalEntries.filter(e => e.type === 'task')
+  const open = tasks.filter(e => e.state === 'open').length
+  const done = tasks.filter(e => e.state === 'done').length
+  const notes = journalEntries.filter(e => e.type === 'note').length
+  const total = open + done
+  const progress = total ? Math.round((done / total) * 100) : 0
+  host.innerHTML = `
+    <div class="day-summary-copy">
+      <span>${open ? `${open} task${open === 1 ? '' : 's'} left` : total ? 'Tasks complete' : 'No tasks yet'}</span>
+      <small>${events} event${events === 1 ? '' : 's'} · ${notes} note${notes === 1 ? '' : 's'}</small>
+    </div>
+    <div class="day-progress" aria-label="${progress}% of tasks complete"><i style="width:${progress}%"></i></div>`
 }
 
 // ─── COMPOSER ───────────────────────────────────────────────
@@ -1217,8 +1244,15 @@ function setEntryType(type) {
   const input = document.getElementById('entryInput')
   input.placeholder = type === 'task' ? 'Add a task…' : type === 'note' ? 'Add a note…' : 'Event name…'
   document.getElementById('composerHint').textContent =
-    type === 'event' ? 'saved to schedule + reminders' : 'saved to journal md'
+    type === 'task' ? 'Something you want to finish' : type === 'note' ? 'A thought worth keeping' : 'Time you want to protect'
+  const submit = document.getElementById('entrySubmit')
+  if (submit) submit.textContent = type === 'task' ? 'Add task' : type === 'note' ? 'Save note' : 'Add event'
   input.focus()
+}
+
+function startJournalEntry(type) {
+  setEntryType(type)
+  document.getElementById('entryInput')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
 }
 
 async function submitEntry() {
@@ -1347,6 +1381,12 @@ function jumpToToday() {
   const today = new Date()
   calendarAnchor = new Date(today.getFullYear(), today.getMonth(), 1)
   calendarSelected = today
+  loadJournal()
+}
+
+function dayStep(delta) {
+  calendarSelected = new Date(calendarSelected.getFullYear(), calendarSelected.getMonth(), calendarSelected.getDate() + delta)
+  calendarAnchor = new Date(calendarSelected.getFullYear(), calendarSelected.getMonth(), 1)
   loadJournal()
 }
 
@@ -1808,7 +1848,7 @@ Object.assign(window, {
   __reloadLibrary: loadLibrary,   // used by the browser-dev self-check
   // Journal
   setEntryType, submitEntry,
-  journalToggle, journalMigrate, journalSkip, journalDelete, eventDelete,
+  journalToggle, journalMigrate, journalSkip, journalDelete, eventDelete, startJournalEntry, dayStep,
   selectCalendarDate, monthStep, jumpToToday,
   // Companion
   startPairing, stopPairing, copyPairCode, joinPairing, scanPairCode, keepVersion,

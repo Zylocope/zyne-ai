@@ -87,6 +87,28 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, [tabindex]:fo
 .feed-sheet { background: var(--surface); border-radius: 14px; }
 /* companion: pairing, backup, chat — sheets are cards here, not drop-downs */
 #companionScroll .feed-sheet { border: 1px solid var(--border); max-height: none; }
+.companion-head { display: flex; align-items: center; }
+.page-subtitle { max-width: 620px; margin-top: 5px; color: var(--muted); font-size: 12px; line-height: 1.45; }
+#page-companion #companionScroll { width: 100%; max-width: 980px; margin: 0 auto; padding: 24px 28px 38px; }
+.companion-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.companion-card {
+  min-width: 0; padding: 20px; border: 1px solid var(--border); border-radius: 20px;
+  background: var(--surface); box-shadow: var(--raise-md);
+}
+.companion-card h2 { margin: 5px 0 7px; font-family: Georgia, serif; font-size: 21px; font-weight: 400; line-height: 1.25; }
+.companion-card > p { color: var(--muted); font-size: 12.5px; line-height: 1.6; }
+.companion-step { color: var(--learn); font-size: 9px; font-weight: 700; letter-spacing: 2px; }
+.companion-sync { grid-row: span 2; }
+.companion-ai { grid-column: 2; }
+.companion-device-flow, .companion-field { display: flex; flex-direction: column; gap: 9px; margin-top: 18px; }
+.companion-field > span { margin-left: 2px; color: var(--muted); font-size: 10px; }
+.companion-card .companion-actions { margin-top: 14px; }
+.companion-card .btn-primary { width: auto; min-height: 42px; padding: 10px 15px; font-size: 12px; }
+.companion-status { min-height: 0; margin-top: 10px; color: var(--muted); font-size: 11px; line-height: 1.5; }
+.companion-status:empty { display: none; }
+.companion-card .feed-status { padding: 22px 8px; }
+.companion-card #aiPanel > .sheet-label { margin-top: 16px; }
+.companion-card #aiPanel .task-input-row { padding-inline: 0; }
 .companion-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .companion-actions .btn-primary { width: auto; }
 #companionScroll .composer-hint:empty { display: none; }
@@ -103,6 +125,15 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, [tabindex]:fo
 .pair-manual summary { cursor: pointer; padding: 6px 0; }
 .pair-manual[open] { display: flex; flex-direction: column; gap: 8px; }
 .pair-manual .input-field { margin-top: 4px; }
+@media (max-width: 700px) {
+  .companion-head { padding-inline: 16px; }
+  .companion-head .page-subtitle { max-width: 92%; }
+  #page-companion #companionScroll { padding: 16px 14px 28px; }
+  .companion-grid { grid-template-columns: 1fr; }
+  .companion-sync, .companion-ai { grid-row: auto; grid-column: auto; }
+  .companion-card { padding: 17px; }
+  .companion-card .btn-primary { width: 100%; }
+}
 
 /* what next? (coach.js) */
 .next-card { margin-bottom: 14px; padding: 14px 16px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }

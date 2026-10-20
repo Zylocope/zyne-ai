@@ -240,6 +240,30 @@
 .caught-up-sub { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
 
 /* ─── JOURNAL ──────────────────────────────────────────────── */
+.journal-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding-block: 14px;
+}
+.journal-kicker {
+  margin-bottom: 3px; color: var(--learn); font-size: 9px; font-weight: 700;
+  letter-spacing: 2.2px;
+}
+.journal-head .page-title {
+  font-family: Georgia, 'Instrument Serif', serif; font-size: clamp(25px, 4vw, 34px);
+  font-weight: 400; letter-spacing: -.5px; line-height: 1.05;
+}
+.journal-date-sub { margin-top: 4px; color: var(--muted); font-size: 11px; }
+.journal-day-nav {
+  display: flex; align-items: center; padding: 3px; gap: 2px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+}
+.journal-day-nav button {
+  min-width: 36px; height: 34px; padding: 0 9px; border: 0; border-radius: 10px;
+  background: transparent; color: var(--text); cursor: pointer; font-size: 18px;
+}
+.journal-day-nav button:active { background: var(--well); transform: scale(.95); }
+.journal-day-nav .journal-today-btn { font-size: 11px; font-weight: 650; min-width: 52px; color: var(--learn); }
+
 .journal-date-label {
   color: var(--pers); font-weight: 400; font-size: 11px;
   letter-spacing: 1px; margin-left: 8px;
@@ -252,6 +276,17 @@
   margin: 14px 4px 7px;
 }
 .j-section-label:first-child { margin-top: 2px; }
+
+.day-summary {
+  display: grid; grid-template-columns: auto minmax(100px, 1fr); align-items: center; gap: 16px;
+  padding: 14px 16px; border: 1px solid var(--border); border-radius: 16px;
+  background: var(--surface); box-shadow: var(--raise-sm);
+}
+.day-summary-copy { display: flex; flex-direction: column; gap: 3px; }
+.day-summary-copy span { font-family: Georgia, serif; font-size: 17px; }
+.day-summary-copy small { color: var(--muted); font-size: 10px; }
+.day-progress { height: 7px; overflow: hidden; border-radius: 999px; background: var(--well); }
+.day-progress i { display: block; height: 100%; border-radius: inherit; background: var(--learn); transition: width .3s ease; }
 
 .j-row {
   display: flex; align-items: center; gap: 10px;
@@ -304,25 +339,50 @@
 .j-task.migrated .j-check, .j-task.skipped .j-check { opacity: 0.35; cursor: default; }
 
 .j-act {
-  width: 34px; height: 34px; flex-shrink: 0;
-  border: none; background: none;
+  min-width: 34px; height: 34px; padding: 0 7px; flex-shrink: 0;
+  border: 1px solid transparent; background: none;
   color: var(--muted); opacity: 0.65;
   cursor: pointer;
   border-radius: 9px;
   display: flex; align-items: center; justify-content: center;
   transition: transform 0.1s;
 }
+.j-row:hover .j-act { opacity: 1; }
+.j-act:not(.j-del) { background: var(--well); border-color: var(--border); font-size: 10px; }
+.j-del { font-size: 10px; }
 .j-act:active { transform: scale(0.88); opacity: 1; color: var(--learn); }
 .j-del:active { color: var(--news); }
+
+.journal-empty {
+  padding: 34px 18px 38px; border: 1px dashed var(--border2); border-radius: 20px;
+  background: color-mix(in srgb, var(--surface) 74%, transparent); text-align: center;
+}
+.journal-empty-mark { color: var(--pers); font-size: 28px; line-height: 1; }
+.journal-empty-title { margin-top: 12px; font-family: Georgia, serif; font-size: 22px; }
+.journal-empty p { margin-top: 6px; color: var(--muted); font-size: 12px; }
+.journal-empty-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 7px; margin-top: 18px; }
+.journal-empty-actions button {
+  padding: 8px 11px; border: 1px solid var(--border); border-radius: 999px;
+  color: var(--text); background: var(--surface); cursor: pointer; font-size: 11px;
+}
+.journal-empty-actions button:first-child { color: #fff; background: var(--learn); border-color: var(--learn); }
 
 /* ─── COMPOSER ─────────────────────────────────────────────── */
 .composer {
   border-top: 1px solid var(--border);
   flex-shrink: 0;
   padding-bottom: env(safe-area-inset-bottom, 0px);
-  background: var(--surface);
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  box-shadow: 0 -8px 28px color-mix(in srgb, var(--text) 7%, transparent);
 }
-.composer-chips { padding: 10px 14px 8px; }
+.composer-title-row {
+  display: flex; align-items: end; justify-content: space-between; gap: 12px;
+  padding: 11px 14px 3px;
+}
+.composer-title { font-family: Georgia, serif; font-size: 16px; }
+.composer-date { margin-top: 2px; color: var(--muted); font-size: 9px; }
+.composer-chips { padding: 7px 14px 8px; }
+.composer-chips .chip { flex: 1; justify-content: center; height: 32px; }
 .composer-hint {
   margin-left: auto;
   font-size: 9px; color: var(--muted); letter-spacing: 0.5px;
@@ -334,6 +394,8 @@
   gap: 6px;
   padding: 0 14px 8px;
 }
+.composer-event-fields label { min-width: 0; color: var(--muted); font-size: 9px; }
+.composer-event-fields label > span { display: block; margin: 0 0 4px 2px; }
 .composer-event-fields .input-field { font-size: 11px; min-width: 0; }
 
 .task-input-row {
@@ -341,18 +403,33 @@
   padding: 10px 14px;
   flex-shrink: 0;
 }
-.task-add-btn {
-  width: 44px; height: 44px; flex-shrink: 0;
+#page-journal .task-add-btn {
+  width: auto; min-width: 86px; height: 44px; padding: 0 15px; flex-shrink: 0;
   border-radius: 13px;
   border: 1px solid var(--border);
   background: var(--key-grad);
   box-shadow: var(--edge-hi), var(--edge-lo), var(--raise-sm);
-  color: var(--learn);
+  color: #fff; font-size: 11px; font-weight: 650;
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: transform 0.1s;
 }
-.task-add-btn:active { transform: scale(0.92); }
+#page-journal .task-add-btn:active { transform: scale(0.92); }
+
+@media (max-width: 560px) {
+  .journal-head { padding-inline: 16px; }
+  .journal-day-nav { flex-shrink: 0; }
+  .journal-day-nav .journal-today-btn { display: none; }
+  .day-summary { grid-template-columns: 1fr; gap: 10px; }
+  .j-row { flex-wrap: wrap; }
+  .j-row .j-text { flex: 1 1 calc(100% - 50px); }
+  .j-row .j-act { margin-top: 1px; }
+  .j-row .j-act:not(.j-del) { flex: 1; }
+  .composer-title-row { align-items: start; }
+  .composer-hint { max-width: 48%; white-space: normal; text-align: right; line-height: 1.35; }
+  .composer-event-fields { grid-template-columns: 1fr 1fr; }
+  .task-input-row { padding-top: 3px !important; }
+}
 
 /* ─── TOAST ────────────────────────────────────────────────── */
 #toast {
